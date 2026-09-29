@@ -68,6 +68,7 @@ button,input,select,textarea{font-family:inherit}
 .cta.done .dot{width:52px;height:52px}
 .cta.quiet{background:var(--surface);color:var(--fg);border:1.5px solid var(--track);font-weight:500;font-size:17px}
 .cta.quiet .dot{background:var(--track);color:var(--accent-text)}
+.cta[aria-disabled="true"]{opacity:.4}
 .cta.plain{justify-content:center;padding:0 28px}
 .link{align-self:center;min-height:48px;padding:0 16px;border:0;background:none;color:var(--muted);font-size:16px;cursor:pointer}
 .link.strong{color:var(--fg);font-weight:500}
@@ -280,7 +281,7 @@ var ACTIONS = [
   {a:'write one line in a journal', s:'write one word', m:2, who:'a writer'},
   {a:'drink a glass of water', s:'take one sip', m:1, who:'someone who looks after themselves'},
   {a:'do five push-ups', s:'do one push-up', m:1, who:'someone strong'},
-  {a:'walk for ten minutes', s:'walk to the corner and back', m:10, who:'a walker'}
+  {a:'walk for two minutes', s:'put on my walking shoes', m:2, who:'a walker'}
 ];
 function active(){ return S.habits.filter(function(h){ return h.status === 'active'; }); }
 function graduated(){ return S.habits.filter(function(h){ return h.status === 'graduated'; }); }
@@ -732,7 +733,7 @@ views.intro = function(){
     return top + '<div class="trow rise" style="--i:0"><span class="tbtn" style="cursor:default">' + buddy('idle', 76) + '</span><p class="bubble">Here’s how this works.</p></div>' +
       '<h1 class="h1 sm rise" id="h" tabindex="-1" style="--i:1">Pair a tiny habit<br><span class="dim">with something you already do.</span></h1>' +
       '<div class="thread reveal" style="display:flex;flex-direction:column;gap:14px">' +
-        [['After I pour my coffee', 'read two pages'], ['When I get home', 'walk for ten minutes']].map(function(r, k){
+        [['After I pour my coffee', 'read two pages'], ['When I get home', 'walk for two minutes']].map(function(r, k){
           return '<div class="node ' + (k === 0 ? 'is-done' : '') + ' rise" style="padding-block:2px;--i:' + (3 + k * 2) + '"><span class="knot" style="top:10px;margin-top:0"></span><div class="txt"><span class="cue">' + esc(r[0]) + '</span><span class="act" style="text-decoration:none;color:var(--fg)">' + esc(r[1]) + '</span></div></div>';
         }).join('') + '</div>' +
       '<div class="pills rise" style="--i:7">' + ['No alarms', 'No streaks', 'Nothing resets'].map(function(t){ return '<span class="pill">' + I.checkS + t + '</span>'; }).join('') + '</div>' +
@@ -745,11 +746,12 @@ views.intro = function(){
       '<div class="card lock rise" style="--i:3;flex-direction:row">' + I.lock + '<p class="small muted" style="font-size:15px;line-height:1.5"><span class="hl" style="font-weight:500">Stays on your phone.</span> No email, no password, nothing uploaded. You can back it up later in Settings.</p></div>' +
       '<div class="spacer"></div><div class="stack rise" style="--i:4">' + cta('Continue', 'obName') + '<button type="button" class="link" data-act="obSkip">Skip for now</button></div>';
   }
-  var cur = D.obI == null ? 0 : D.obI;
+  var cur = D.obCustom && D.obCustom.trim() ? -1 : (D.obI == null ? -1 : D.obI);
   return top + '<div class="trow rise" style="--i:0"><span class="tbtn" style="cursor:default">' + buddy('happy', 76) + '</span><p class="bubble">' + (nm ? 'Nice to meet you, ' + esc(nm) + '!' : 'Nice to meet you!') + '</p></div>' +
     '<div class="stack rise" style="gap:8px;--i:1"><h1 class="h1 sm" id="h" tabindex="-1">Pick your<br><span class="dim">first habit.</span></h1><p class="muted">Choose who you want to be. I’ll suggest a tiny habit to go with it.</p></div>' +
     '<div class="rows rise" style="--i:2">' + ACTIONS.map(function(a, k){ return radioRow(cap(a.who), cap(a.a), cur === k, 'obPick', 'data-i="' + k + '"'); }).join('') + '</div>' +
-    '<div class="spacer"></div><div class="stickycta rise" style="--i:3">' + cta('Continue', 'obGo') + '</div>';
+    '<div class="field rise" style="--i:3"><label for="own-habit">Or write your own tiny habit</label><input id="own-habit" type="text" data-in="obCustom" value="' + esc(D.obCustom || '') + '" placeholder="do five squats" autocomplete="off" maxlength="60"></div>' +
+    '<div class="spacer"></div><div class="stickycta rise" style="--i:4">' + cta('Continue', 'obGo', 'id="next" aria-disabled="' + (pickReady() ? 'false' : 'true') + '"') + '</div>';
 };
 
 views.moment = function(){
@@ -759,7 +761,7 @@ views.moment = function(){
   '<div class="rows">' + (function(){ var sg = suggestedMoments(), ord = sg.concat(MOMENTS.filter(function(m){ return sg.indexOf(m) < 0; }));
     return ord.map(function(m){ return radioRow(m, sg.indexOf(m) >= 0 ? 'Suggested for you' : '', sel === m, 'pickMoment', 'data-v="' + esc(m) + '"'); }).join(''); })() + '</div>' +
   '<div class="field"><label for="own-moment">Or something else you always do</label><input id="own-moment" type="text" data-in="custom" value="' + esc(D.custom || '') + '" placeholder="I close my laptop" autocomplete="off"></div>' +
-  '<div class="spacer"></div>' + cta('Next', 'toAction');
+  '<div class="spacer"></div>' + cta('Next', 'toAction', 'id="next" aria-disabled="' + (pickReady() ? 'false' : 'true') + '"');
 };
 
 views.action = function(){
@@ -768,7 +770,7 @@ views.action = function(){
   '<div class="stack" style="gap:8px"><p style="font-size:19px" class="muted">After ' + esc(D.momentFinal) + ',</p><h1 class="h1 sm" id="h" tabindex="-1">what\'s the tiny thing?</h1><p class="muted">Keep it under two minutes. So small it would feel silly to skip.</p></div>' +
   '<div class="rows">' + ACTIONS.map(function(a){ return radioRow(cap(a.a), a.m > 2 ? 'About ' + a.m + ' minutes' : (a.m === 1 ? 'About 1 minute' : 'About 2 minutes'), sel === a.a, 'pickAction', 'data-v="' + esc(a.a) + '"'); }).join('') + '</div>' +
   '<div class="field"><label for="own-action">Or write your own</label><input id="own-action" type="text" data-in="customAction" value="' + esc(D.customAction || '') + '" placeholder="do five squats" autocomplete="off"></div>' +
-  '<div class="spacer"></div>' + cta('Next', 'toReview');
+  '<div class="spacer"></div>' + cta('Next', 'toReview', 'id="next" aria-disabled="' + (pickReady() ? 'false' : 'true') + '"');
 };
 
 views.review = function(){
@@ -1109,9 +1111,25 @@ function render(focus){
 
 /* ---------- actions ---------- */
 function logDone(h, kind){ h.log[todayStr()] = kind === 'small' ? 'small' : 'full'; save(); }
+function pickReady(){
+  if (V === 'intro') return D.obI != null || !!(D.obCustom && D.obCustom.trim());
+  if (V === 'moment') return !!(D.moment || (D.custom && D.custom.trim()));
+  if (V === 'action') return !!(D.action || (D.customAction && D.customAction.trim()));
+  return true;
+}
+function syncPick(k){
+  var map = {obCustom:['obI','obPick'], custom:['moment','pickMoment'], customAction:['action','pickAction']}, m = map[k];
+  if (m && D[k] && D[k].trim()) {
+    D[m[0]] = m[0] === 'obI' ? null : '';
+    var rows = document.querySelectorAll('[data-act="' + m[1] + '"]');
+    for (var i = 0; i < rows.length; i++) rows[i].setAttribute('aria-pressed', 'false');
+  }
+  var nx = document.getElementById('next');
+  if (nx) nx.setAttribute('aria-disabled', pickReady() ? 'false' : 'true');
+}
 function startPlan(){
   if (active().length >= 3) { toast('All three slots are full. Graduate a habit to add another.'); go('list'); return; }
-  D = {moment:'I pour my coffee', custom:'', action:'read two pages', customAction:'', small:'', who:'', momentFinal:'', actionFinal:''};
+  D = {moment:'', custom:'', action:'', customAction:'', small:'', who:'', momentFinal:'', actionFinal:''};
   go('moment');
 }
 function normMoment(s){ s = s.trim().replace(/[.!]+$/, ''); s = s.replace(/^after\s+/i, ''); return s; }
@@ -1126,7 +1144,7 @@ function makeExamples(){
   var c1 = addDays(t, -48), c2 = addDays(t, -20), c3 = addDays(t, -71);
   return [
     {id:uid() + 'a', moment:'I pour my coffee', action:'read two pages', small:'read one paragraph', m:2, who:'a reader', created:c1, log:gen(c1, 9, 4), checks:[{d:addDays(t,-14),v:1},{d:addDays(t,-7),v:1}], status:'active', example:true},
-    {id:uid() + 'b', moment:'I get home', action:'walk for ten minutes', small:'walk to the corner and back', m:10, who:'a walker', created:c2, log:gen(c2, 6, 2, true), checks:[{d:addDays(t,-7),v:0}], status:'active', example:true},
+    {id:uid() + 'b', moment:'I get home', action:'walk for two minutes', small:'put on my walking shoes', m:2, who:'a walker', created:c2, log:gen(c2, 6, 2, true), checks:[{d:addDays(t,-7),v:0}], status:'active', example:true},
     {id:uid() + 'c', moment:'I brush my teeth', action:"write tomorrow's one task", small:'write one word', m:2, who:'someone who plans', created:c3, log:gen(c3, 12, 6), checks:[{d:addDays(t,-21),v:2},{d:addDays(t,-14),v:2},{d:addDays(t,-7),v:2}], status:'active', example:true}
   ];
 }
@@ -1157,10 +1175,11 @@ function act(a, el){
       break; }
     case 'learnedGo': if (S.seen) go('today'); else go('intro', {i:3}); break;
     case 'homeStyle': S.profile.quiz = S.profile.quiz || {}; S.profile.quiz.style = ds.v; save(); render(false); break;
-    case 'obPick': D.obI = +ds.i; render(false); break;
+    case 'obPick': D.obI = +ds.i; D.obCustom = ''; render(false); break;
     case 'obGo': {
-      var oa = ACTIONS[D.obI == null ? 0 : D.obI];
-      D = {moment:suggestedMoments()[0] || 'I pour my coffee', custom:'', action:oa.a, customAction:'', small:'', who:'', momentFinal:'', actionFinal:'', obFrom:true, pname:D.pname};
+      var oc = (D.obCustom || '').trim(), oa = D.obI != null ? ACTIONS[D.obI] : null;
+      if (!oc && !oa) { toast('Pick one, or write your own.'); break; }
+      D = {moment:'', custom:'', action:oc ? '' : oa.a, customAction:oc, small:'', who:'', momentFinal:'', actionFinal:'', obFrom:true, pname:D.pname, obI:D.obI, obCustom:oc};
       go('moment'); break; }
     case 'saveName': {
       var nm1 = (D.pname2 != null ? D.pname2 : (S.profile.name || '')).trim().slice(0, 30);
@@ -1186,7 +1205,7 @@ function act(a, el){
       var preset = ACTIONS.filter(function(x){ return x.a === D.action; })[0];
       D.actionFinal = ca ? ca.replace(/[.!]+$/, '').replace(/^i('ll| will)\s+/i, '') : D.action;
       if (!D.actionFinal) { toast('Pick or write a tiny action first.'); break; }
-      D.small = ca ? 'do the first minute of it' : preset.s; D.who = ca ? '' : preset.who; D.mins = ca ? 5 : preset.m;
+      D.small = ca ? 'do the first minute of it' : preset.s; D.who = ca ? '' : preset.who; D.mins = ca ? 2 : preset.m;
       go('review'); break; }
     case 'save': {
       var s = (D.small || '').trim() || 'do the first minute of it';
@@ -1268,7 +1287,7 @@ document.addEventListener('click', function(e){
 });
 document.addEventListener('input', function(e){
   var k = e.target && e.target.dataset ? e.target.dataset.in : null;
-  if (k) D[k] = e.target.value;
+  if (k) { D[k] = e.target.value; syncPick(k); }
 });
 document.addEventListener('change', function(e){
   var k = e.target && e.target.dataset ? e.target.dataset.in : null;
