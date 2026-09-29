@@ -218,8 +218,7 @@ button,input,select,textarea{font-family:inherit}
 @media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}.dr{stroke-dashoffset:0!important}.fd{opacity:1!important}.pup{transition:none!important}}
 button{transition:background-color .15s,border-color .15s,color .15s}
 </style>
-</head>
-<body>
+
 <div id="app"></div>
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
@@ -602,24 +601,24 @@ function hello(){
 
 /* ---------- Tally's questions: understand the person before the habit ---------- */
 var QS = [
-  {k:'why', mood:'wave', say:function(n){ return 'Before we pick anything, six quick taps' + (n ? ', ' + n : '') + '. I’ll tailor everything to you.'; },
+  {k:'why', mood:'wave', say:function(n){ return 'Six quick taps' + (n ? ', ' + n : '') + '. Then I can fit the app to you.'; },
    q:'What brings you here?', sub:'No wrong answers.',
-   o:[['build','Start something good','A habit I keep meaning to begin'],['swap','Do less of something','Like scrolling when I’m bored'],['back','Get back on track','Something I used to do'],['look','Just curious','Show me how it works']]},
-  {k:'energy', mood:'think', say:function(){ return 'Everyone has a rhythm. Habits stick better when they fit yours.'; },
-   q:'When do you feel most like yourself?',
+   o:[['build','Start a new habit','Something I keep meaning to begin'],['swap','Do less of something','Like scrolling when I’m bored'],['back','Get back on track','Something I used to do'],['look','Just curious','Show me how it works']]},
+  {k:'energy', mood:'think', say:function(){ return 'Habits are easier when they match your energy.'; },
+   q:'When do you have the most energy?',
    o:[['am','Mornings'],['mid','Middle of the day'],['pm','Evenings'],['vary','It changes a lot']]},
-  {k:'days', mood:'think', say:function(){ return 'Routine matters more than willpower.'; },
-   q:'How alike are your days?',
-   o:[['same','Mostly the same','Same wake-up, same rhythm'],['some','Some routine','Weekdays yes, weekends less'],['chaos','All over the place','Shifts, travel, kids, surprises']]},
+  {k:'days', mood:'think', say:function(){ return 'Steady routines make this easier.'; },
+   q:'How similar are your days?',
+   o:[['same','Mostly the same','Similar wake-up time, similar day'],['some','Some routine','Weekdays are steady, weekends aren’t'],['chaos','All over the place','Shifts, travel, kids, surprises']]},
   {k:'broke', mood:'idle', say:function(){ return 'Be honest. I won’t judge.'; },
-   q:'Last time a habit fell apart, what happened?',
-   o:[['forgot','I just forgot about it'],['big','It was too much'],['mood','I stopped feeling like it'],['miss','I missed a day and gave up'],['new','This is my first real try']]},
-  {k:'slip', mood:'think', say:function(){ return 'This one matters most.'; },
-   q:'When you miss a day, what does your head say?',
+   q:'What usually happens when a habit falls apart?',
+   o:[['forgot','I just forgot about it'],['big','It was too much work'],['mood','I lost the motivation'],['miss','I missed a day and gave up'],['new','This is my first real try']]},
+  {k:'slip', mood:'think', say:function(){ return 'This one matters a lot.'; },
+   q:'When you miss a day, what do you tell yourself?',
    o:[['fine','“No big deal, carry on.”'],['bad','“See? I’m bad at this.”'],['reset','“I’ll start fresh on Monday.”']]},
-  {k:'style', mood:'happy', say:function(){ return 'Last one!'; },
-   q:'How should I show up?',
-   o:[['show','Show me my progress','Days, dots and the bigger picture'],['quiet','Keep it quiet','Just the next step, nothing else']]}
+  {k:'style', mood:'happy', say:function(){ return 'Last one.'; },
+   q:'How much do you want to see?',
+   o:[['show','Show me my progress','Days, weekly dots and a progress bar'],['quiet','Keep it quiet','Just the next step, nothing else']]}
 ];
 function quiz(){ return (S.profile && S.profile.quiz) || {}; }
 function quizCount(){ var q = quiz(); return QS.filter(function(x){ return q[x.k]; }).length; }
@@ -634,29 +633,29 @@ function suggestedMoments(){
 function insights(){
   var q = quiz(), out = [], sm = suggestedMoments();
   if (q.energy) {
-    var w = q.days === 'chaos' ? 'Your days vary, so we’ll use a moment that happens no matter what.'
-      : q.energy === 'am' ? 'Mornings are your time, so we’ll build while the tank is full.'
-      : q.energy === 'pm' ? 'Evenings are your time, so we’ll hook onto the end of the day.'
-      : q.energy === 'mid' ? 'Midday is your time, so we’ll hook onto the middle of the day.'
-      : 'Your energy moves around, so we’ll use a moment that happens every day anyway.';
-    out.push({k:'Your moment', t:w + ' I’d start with “after ' + sm[0] + '”.'});
+    var w = q.days === 'chaos' ? 'Your days change a lot, so we’ll use something that happens every day.'
+      : q.energy === 'am' ? 'You have the most energy in the morning, so we’ll use that.'
+      : q.energy === 'pm' ? 'You have the most energy in the evening, so we’ll use that.'
+      : q.energy === 'mid' ? 'You have the most energy midday, so we’ll use that.'
+      : 'Your energy moves around, so we’ll use something that happens every day.';
+    out.push({k:'Your starting point', t:w + ' Good place to start: “After ' + sm[0] + '”.'});
   }
   var B = {
-    forgot:['You said you forgot', 'Forgetting isn’t a willpower problem, it’s a missing cue. Your habit gets tied to a moment, so there’s nothing to remember.'],
-    big:['You said it was too much', 'We’ll start almost silly-small: under two minutes, with an even smaller version for hard days.'],
-    mood:['You said the feeling faded', 'Feelings come and go, so we’ll design for your worst day, not your best. Small enough to do tired.'],
-    miss:['You said one miss ended it', 'Here, nothing ever resets. After a miss, the next day just asks for the small version.'],
-    'new':['Your first real try', 'Good news: starting small is the whole trick. One habit to begin, and only one.']
+    forgot:['You forget habits', 'That’s normal. Yours will be tied to something you already do, so there’s nothing to remember.'],
+    big:['Habits felt like too much work', 'We’ll start tiny: under two minutes, with an even smaller version for hard days.'],
+    mood:['Motivation fades', 'It does for everyone. We’ll pick something small enough to do even when you’re tired.'],
+    miss:['One miss ended it', 'Here, nothing resets. After a miss, the next day just asks for the small version.'],
+    'new':['Your first real try', 'Good. Start small. One habit at a time is plenty.']
   }[q.broke];
   if (B) out.push({k:B[0], t:B[1]});
   var L = {
-    bad:['That inner voice', '“I’m bad at this” is really common, and it isn’t true. A slip is information, not a verdict. I’ll never show you a broken streak.'],
-    reset:['Waiting for Monday', 'Fresh starts feel good but waste the days in between. There are no Mondays here: tomorrow you just do the small version.'],
-    fine:['You shrug off misses', 'That’s exactly the attitude that keeps habits alive. Hold on to it.']
+    bad:['That voice in your head', '“I’m bad at this” is really common, and it isn’t true. A missed day is just information. I’ll never show you a broken streak.'],
+    reset:['Waiting for Monday', 'Fresh starts feel good, but you lose the days in between. There’s no Monday here. Tomorrow you just do the small version.'],
+    fine:['You shrug off misses', 'Good. That attitude keeps habits alive. Hold on to it.']
   }[q.slip];
   if (L) out.push({k:L[0], t:L[1]});
-  if (q.why === 'swap') out.push({k:'Doing less of something', t:'We won’t block anything. When boredom hits, tap “I have a few free minutes” and I’ll offer something better instead.'});
-  else if (q.style === 'quiet') out.push({k:'Quiet mode', t:'Your home screen will show just the next step. You can change that in Settings.'});
+  if (q.why === 'swap') out.push({k:'Doing less of something', t:'I won’t block anything. When you’re bored, tap “I have a few free minutes” and I’ll suggest something better to do.'});
+  else if (q.style === 'quiet') out.push({k:'Quiet mode', t:'Your home screen will only show the next step. You can change that in Settings.'});
   return out;
 }
 function recShots(){
@@ -725,13 +724,13 @@ views.intro = function(){
   if (i === 0) {
     return '<div class="ob0"><div class="rise" style="--i:0">' + logoMark(72, true) + '</div><div class="wm rise" style="--i:1">then<i>.</i></div></div>' +
       '<div class="ob-t rise" style="--i:2">' + buddy('wave', 150, true) + '</div>' +
-      '<h1 class="h1 sm center rise" id="h" tabindex="-1" style="--i:3">Hi, I’m Tally.<br><span class="dim">I help good habits stick.</span></h1>' +
+      '<h1 class="h1 sm center rise" id="h" tabindex="-1" style="--i:3">Hi, I’m Tally.<br><span class="dim">I help you make habits that last.</span></h1>' +
       '<div class="spacer"></div><div class="stack rise" style="--i:4">' + cta('Nice to meet you', 'go', 'data-to="intro" data-i="1"') +
-      '<button type="button" class="link" data-act="examples">Just look around with example habits</button></div>';
+      '<button type="button" class="link" data-act="examples">Just look around first</button></div>';
   }
   if (i === 1) {
-    return top + '<div class="trow rise" style="--i:0"><span class="tbtn" style="cursor:default">' + buddy('idle', 76) + '</span><p class="bubble">Here’s my one trick.</p></div>' +
-      '<h1 class="h1 sm rise" id="h" tabindex="-1" style="--i:1">A habit needs a moment,<br><span class="dim">not a reminder.</span></h1>' +
+    return top + '<div class="trow rise" style="--i:0"><span class="tbtn" style="cursor:default">' + buddy('idle', 76) + '</span><p class="bubble">Here’s how this works.</p></div>' +
+      '<h1 class="h1 sm rise" id="h" tabindex="-1" style="--i:1">Pair a tiny habit<br><span class="dim">with something you already do.</span></h1>' +
       '<div class="thread reveal" style="display:flex;flex-direction:column;gap:14px">' +
         [['After I pour my coffee', 'read two pages'], ['When I get home', 'walk for ten minutes']].map(function(r, k){
           return '<div class="node ' + (k === 0 ? 'is-done' : '') + ' rise" style="padding-block:2px;--i:' + (3 + k * 2) + '"><span class="knot" style="top:10px;margin-top:0"></span><div class="txt"><span class="cue">' + esc(r[0]) + '</span><span class="act" style="text-decoration:none;color:var(--fg)">' + esc(r[1]) + '</span></div></div>';
@@ -740,23 +739,23 @@ views.intro = function(){
       '<div class="spacer"></div><div class="rise" style="--i:8">' + cta('Makes sense', 'go', 'data-to="intro" data-i="2"') + '</div>';
   }
   if (i === 2) {
-    return top + '<div class="trow rise" style="--i:0"><span class="tbtn" style="cursor:default">' + buddy('think', 76) + '</span><p class="bubble">What should I call you?</p></div>' +
-      '<h1 class="h1 sm rise" id="h" tabindex="-1" style="--i:1">Let’s set up<br><span class="dim">your space.</span></h1>' +
+    return top + '<div class="trow rise" style="--i:0"><span class="tbtn" style="cursor:default">' + buddy('think', 76) + '</span><p class="bubble">Just a first name is fine.</p></div>' +
+      '<h1 class="h1 sm rise" id="h" tabindex="-1" style="--i:1">What should<br><span class="dim">I call you?</span></h1>' +
       '<div class="field rise" style="--i:2"><label class="big" for="pname">Your first name</label><input id="pname" type="text" data-in="pname" value="' + esc(D.pname || '') + '" placeholder="Type your name" autocomplete="given-name" maxlength="30" enterkeyhint="done"></div>' +
-      '<div class="card lock rise" style="--i:3;flex-direction:row">' + I.lock + '<p class="small muted" style="font-size:15px;line-height:1.5"><span class="hl" style="font-weight:500">Your profile lives on this device.</span> No email, no password, nothing sent anywhere. You can back it up any time.</p></div>' +
-      '<div class="spacer"></div><div class="stack rise" style="--i:4">' + cta('Create my space', 'obName') + '<button type="button" class="link" data-act="obSkip">Skip for now</button></div>';
+      '<div class="card lock rise" style="--i:3;flex-direction:row">' + I.lock + '<p class="small muted" style="font-size:15px;line-height:1.5"><span class="hl" style="font-weight:500">Stays on your phone.</span> No email, no password, nothing uploaded. You can back it up later in Settings.</p></div>' +
+      '<div class="spacer"></div><div class="stack rise" style="--i:4">' + cta('Continue', 'obName') + '<button type="button" class="link" data-act="obSkip">Skip for now</button></div>';
   }
   var cur = D.obI == null ? 0 : D.obI;
-  return top + '<div class="trow rise" style="--i:0"><span class="tbtn" style="cursor:default">' + buddy('happy', 76) + '</span><p class="bubble">' + (nm ? 'Lovely to meet you, ' + esc(nm) + '!' : 'Lovely to meet you!') + '</p></div>' +
-    '<div class="stack rise" style="gap:8px;--i:1"><h1 class="h1 sm" id="h" tabindex="-1">Who are you<br><span class="dim">becoming?</span></h1><p class="muted">Pick one. I’ll suggest a tiny first habit for it.</p></div>' +
+  return top + '<div class="trow rise" style="--i:0"><span class="tbtn" style="cursor:default">' + buddy('happy', 76) + '</span><p class="bubble">' + (nm ? 'Nice to meet you, ' + esc(nm) + '!' : 'Nice to meet you!') + '</p></div>' +
+    '<div class="stack rise" style="gap:8px;--i:1"><h1 class="h1 sm" id="h" tabindex="-1">Pick your<br><span class="dim">first habit.</span></h1><p class="muted">Choose who you want to be. I’ll suggest a tiny habit to go with it.</p></div>' +
     '<div class="rows rise" style="--i:2">' + ACTIONS.map(function(a, k){ return radioRow(cap(a.who), cap(a.a), cur === k, 'obPick', 'data-i="' + k + '"'); }).join('') + '</div>' +
-    '<div class="spacer"></div><div class="stickycta rise" style="--i:3">' + cta('Build my first habit', 'obGo') + '</div>';
+    '<div class="spacer"></div><div class="stickycta rise" style="--i:3">' + cta('Continue', 'obGo') + '</div>';
 };
 
 views.moment = function(){
   var sel = D.custom && D.custom.trim() ? null : D.moment;
   return steps(1, D.obFrom ? 'intro' : 'home', D.obFrom ? 3 : undefined) +
-  '<div class="stack" style="gap:8px"><h1 class="h1 sm" id="h" tabindex="-1">What do you already do every day?</h1><p class="muted">Pick one. That moment becomes the reminder, so you won\'t need an alarm.</p></div>' +
+  '<div class="stack" style="gap:8px"><h1 class="h1 sm" id="h" tabindex="-1">What do you already do every day?</h1><p class="muted">Pick one. That becomes your reminder, so you don\'t need an alarm.</p></div>' +
   '<div class="rows">' + (function(){ var sg = suggestedMoments(), ord = sg.concat(MOMENTS.filter(function(m){ return sg.indexOf(m) < 0; }));
     return ord.map(function(m){ return radioRow(m, sg.indexOf(m) >= 0 ? 'Suggested for you' : '', sel === m, 'pickMoment', 'data-v="' + esc(m) + '"'); }).join(''); })() + '</div>' +
   '<div class="field"><label for="own-moment">Or something else you always do</label><input id="own-moment" type="text" data-in="custom" value="' + esc(D.custom || '') + '" placeholder="I close my laptop" autocomplete="off"></div>' +
@@ -766,7 +765,7 @@ views.moment = function(){
 views.action = function(){
   var sel = D.customAction && D.customAction.trim() ? null : D.action;
   return steps(2, 'moment') +
-  '<div class="stack" style="gap:8px"><p style="font-size:19px" class="muted">After ' + esc(D.momentFinal) + ',</p><h1 class="h1 sm" id="h" tabindex="-1">what\'s the tiny thing?</h1><p class="muted">Under two minutes. Small enough that skipping it feels silly.</p></div>' +
+  '<div class="stack" style="gap:8px"><p style="font-size:19px" class="muted">After ' + esc(D.momentFinal) + ',</p><h1 class="h1 sm" id="h" tabindex="-1">what\'s the tiny thing?</h1><p class="muted">Keep it under two minutes. So small it would feel silly to skip.</p></div>' +
   '<div class="rows">' + ACTIONS.map(function(a){ return radioRow(cap(a.a), a.m > 2 ? 'About ' + a.m + ' minutes' : (a.m === 1 ? 'About 1 minute' : 'About 2 minutes'), sel === a.a, 'pickAction', 'data-v="' + esc(a.a) + '"'); }).join('') + '</div>' +
   '<div class="field"><label for="own-action">Or write your own</label><input id="own-action" type="text" data-in="customAction" value="' + esc(D.customAction || '') + '" placeholder="do five squats" autocomplete="off"></div>' +
   '<div class="spacer"></div>' + cta('Next', 'toReview');
@@ -775,9 +774,9 @@ views.action = function(){
 views.review = function(){
   return steps(3, 'action') +
   '<h1 class="h1" id="h" tabindex="-1"><span class="dim">After ' + esc(D.momentFinal) + ',</span><br>I\'ll ' + esc(D.actionFinal) + '.</h1>' +
-  '<div class="field"><label class="big" for="small">On a hard day, at least…</label><input id="small" type="text" data-in="small" value="' + esc(D.small) + '" autocomplete="off"><span class="small muted">Slipping is normal. This is the smaller version you do on those days.</span></div>' +
-  '<div class="field"><label class="big" for="who">I\'m becoming… <span class="muted" style="font-weight:400">(optional)</span></label><input id="who" type="text" data-in="who" value="' + esc(D.who) + '" placeholder="a reader" autocomplete="off"></div>' +
-  '<div class="card row"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--accent-text)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink:0;margin-top:1px"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 8 3 8H3s3-1 3-8"/><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0"/><path d="M3 3l18 18"/></svg><p class="small muted" style="font-size:15px;line-height:1.5"><span class="hl" style="font-weight:500">No alarm is set.</span> The moment you picked is the reminder. You\'ll see this plan on Today.</p></div>' +
+  '<div class="field"><label class="big" for="small">On a hard day, at least…</label><input id="small" type="text" data-in="small" value="' + esc(D.small) + '" autocomplete="off"><span class="small muted">Missing days is normal. This is the smaller version for those days.</span></div>' +
+  '<div class="field"><label class="big" for="who">I want to be… <span class="muted" style="font-weight:400">(optional)</span></label><input id="who" type="text" data-in="who" value="' + esc(D.who) + '" placeholder="a reader" autocomplete="off"></div>' +
+  '<div class="card row"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--accent-text)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink:0;margin-top:1px"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 8 3 8H3s3-1 3-8"/><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0"/><path d="M3 3l18 18"/></svg><p class="small muted" style="font-size:15px;line-height:1.5"><span class="hl" style="font-weight:500">No alarm needed.</span> Your moment is the reminder. Your plan shows up on Today.</p></div>' +
   '<div class="spacer"></div>' +
   '<div class="stack">' + '<button type="button" class="cta" data-act="save"><span>Start this habit</span><span class="dot">' + I.check + '</span></button>' + '<button type="button" class="link" data-act="go" data-to="moment">Change the moment or action</button></div>';
 };
@@ -799,21 +798,22 @@ function weekStrip(h){
     if (v) n++;
     cells += '<span class="wk"><i class="wd ' + (v === 'full' ? 'f' : v === 'small' ? 's' : '') + (k === 0 ? ' t' : '') + (d < h.created ? ' pre' : '') + '"></i><b aria-hidden="true">' + esc(new Date(p[0], p[1] - 1, p[2]).toLocaleDateString(undefined, {weekday:'narrow'})) + '</b></span>';
   }
-  return '<section class="stack rise" style="gap:10px;--i:4"><h2 class="sec">This week · ' + n + (n === 1 ? ' vote' : ' votes') + '</h2><div class="week" role="img" aria-label="' + n + ' of the last 7 days done">' + cells + '</div></section>';
+  return '<section class="stack rise" style="gap:10px;--i:4"><h2 class="sec">This week · ' + n + (n === 1 ? ' day done' : ' days done') + '</h2><div class="week" role="img" aria-label="' + n + ' of the last 7 days done">' + cells + '</div></section>';
 }
 function goalBar(h){
   var a = age(h), pct = Math.min(100, Math.round(a / 66 * 100));
-  return '<section class="goal rise" style="--i:5"><div class="gb" role="progressbar" aria-valuemin="0" aria-valuemax="66" aria-valuenow="' + Math.min(a, 66) + '" aria-label="Days toward the typical 66"><i style="width:' + pct + '%"></i></div><p class="small muted"><span class="hl" style="font-weight:500">' + esc(cap(h.who || h.action)) + ' · day ' + a + '.</span> Most people feel a habit turn automatic somewhere around day 66. Your pace is your own.</p></section>';
+  return '<section class="goal rise" style="--i:5"><div class="gb" role="progressbar" aria-valuemin="0" aria-valuemax="66" aria-valuenow="' + Math.min(a, 66) + '" aria-label="Days toward the typical 66"><i style="width:' + pct + '%"></i></div><p class="small muted"><span class="hl" style="font-weight:500">' + esc(cap(h.who || h.action)) + ' · day ' + a + '.</span> Habits usually feel automatic after about two months (66 days on average). Everyone’s different.</p></section>';
 }
-var LINES = ['Tie it to the moment, not the clock.', 'A tiny version is still a vote.', 'You don’t need motivation. You need the moment.', 'One small thing, then you’re free.', 'No pressure. Just the next moment.'];
+var LINES = ['A tiny version still counts.', 'You don’t have to feel like it. Just start.', 'Two minutes, then you’re free.', 'Don’t overthink it. Do the first bit.', 'Right after your cue works better than a set time.'];
 function celebrating(){ return CEL && Date.now() < CEL.until ? CEL : null; }
 
 function empty(){
+  var gr = graduated().length;
   return head() +
-  '<div class="rise" style="--i:1">' + tallyRow('wave', 'Nothing on the thread yet. Shall we tie the first knot?', 84) + '</div>' +
-  '<h1 class="h1 rise" id="h" tabindex="-1" style="--i:2"><span class="dim">Nothing on the thread yet.</span><br>Start with one.</h1>' +
-  '<p class="lead muted rise" style="--i:3">Pick something you already do every day, then hook one tiny habit onto it. That\'s all it takes to begin.</p><div class="spacer"></div>' +
-  '<div class="rise" style="--i:4">' + cta('Make a plan', 'start') + '</div>';
+  '<div class="rise" style="--i:1">' + tallyRow(gr ? 'cheer' : 'wave', gr ? 'You graduated a habit. That’s a real win.' : 'Takes about a minute.', 84) + '</div>' +
+  '<h1 class="h1 rise" id="h" tabindex="-1" style="--i:2">' + (gr ? '<span class="dim">Nice work.</span><br>Ready for the next one?' : '<span class="dim">No habits yet.</span><br>Let’s start with one.') + '</h1>' +
+  '<p class="lead muted rise" style="--i:3">Pick something you already do every day, like brushing your teeth. Then add one tiny habit to it.</p><div class="spacer"></div>' +
+  '<div class="rise" style="--i:4">' + cta(gr ? 'Add a habit' : 'Make a plan', 'start') + '</div>';
 }
 
 views.today = function(){
@@ -825,10 +825,10 @@ views.today = function(){
   var out = head();
   var cel = celebrating(), mood = 'idle', msg = LINES[Math.abs(diffDays('2026-01-01', t)) % LINES.length];
   if (cel) { mood = 'cheer'; msg = cel.msg; }
-  else if (rdy) { mood = 'cheer'; msg = 'Something is ready to graduate. Look below.'; }
-  else if (due) { mood = 'think'; msg = 'One quick question when you have a second.'; }
-  else if (!next) { mood = 'happy'; msg = 'That’s the day. Nothing else asks for you.'; }
-  else if (slipped(next)) { msg = quiz().slip === 'bad' ? 'A slip isn’t a verdict. The small version is plenty today.' : quiz().slip === 'reset' ? 'No need to wait for Monday. Today’s small version counts.' : 'Yesterday’s gone. Today’s small version is all I need.'; }
+  else if (rdy) { mood = 'cheer'; msg = 'Big news. A habit is ready to graduate.'; }
+  else if (due) { mood = 'think'; msg = 'Quick question below. Takes two seconds.'; }
+  else if (!next) { mood = 'happy'; msg = 'Nice work. Go enjoy your day.'; }
+  else if (slipped(next)) { msg = quiz().slip === 'bad' ? 'Missing a day doesn’t mean you’re bad at this. Just do the small one today.' : quiz().slip === 'reset' ? 'No need to wait for Monday. Today’s small version counts.' : 'Missed yesterday? No stress. Today’s small version counts.'; }
   out += '<div class="rise" style="--i:1">' + tallyRow(mood, msg, 84) + '</div>';
 
   if (next) {
@@ -838,13 +838,22 @@ views.today = function(){
     out += '<section class="stack rise" style="gap:16px;--i:2">' +
       '<h1 class="h1' + big + '" id="h" tabindex="-1"><span class="dim">' + esc(cue(next)) + ',</span><br>' + esc(txt) + '.</h1>' +
       '<button type="button" class="navlink" style="color:var(--muted);font-weight:400;font-size:15px;align-self:flex-start" data-act="openHabit" data-id="' + next.id + '">' + esc((next.who ? cap(next.who) + ' · ' : '') + tot + (tot === 1 ? ' time' : ' times') + ' so far') + I.right + '</button>' +
-      (sm ? '<p class="small muted" style="font-size:15px">Yesterday slipped, and that\'s fine. Nothing resets. Today\'s version is smaller. <button type="button" class="navlink" style="min-height:44px;font-size:15px" data-act="openMissed" data-id="' + next.id + '">Why that\'s fine</button></p>' : '') +
+      (sm ? '<div class="navrow" style="gap:16px;flex-wrap:wrap"><button type="button" class="navlink" style="font-size:15px;padding:0" data-act="full" data-id="' + next.id + '">Do the full version instead</button><button type="button" class="navlink" style="font-size:15px;padding:0;color:var(--muted);font-weight:400" data-act="openMissed" data-id="' + next.id + '">Why is it smaller?</button></div>' : '') +
       '<button type="button" class="cta done" data-act="done" data-id="' + next.id + '" data-kind="' + (sm ? 'small' : 'full') + '" aria-label="Mark done: ' + esc(txt) + '"><span class="dot">' + I.check + '</span><span>Done</span></button>' +
       (!sm ? '<button type="button" class="link left" style="padding-inline:4px" data-act="done" data-id="' + next.id + '" data-kind="small">Hard day? Just ' + esc(next.small) + '</button>' : '') +
     '</section>';
   } else {
-    out += '<h1 class="h1 rise" id="h" tabindex="-1" style="--i:2"><span class="dim">That\'s the day.</span><br>Nothing else asks for you.</h1>';
+    out += '<h1 class="h1 rise" id="h" tabindex="-1" style="--i:2"><span class="dim">All done for today.</span><br>See you tomorrow.</h1>';
   }
+  var cards = '';
+  if (due) {
+    cards += '<section class="card"><span class="kicker">Weekly check-in</span><h2>Do you “' + esc(due.action) + '” without having to think about it?</h2>' +
+      '<div class="seg">' + [['Not yet',0],['Sometimes',1],['Yes',2]].map(function(c){ return '<button type="button" data-act="checkin" data-id="' + due.id + '" data-v="' + c[1] + '" aria-pressed="false">' + c[0] + '</button>'; }).join('') + '</div></section>';
+  }
+  if (rdy) {
+    cards += '<button type="button" class="card" style="border:0;color:var(--fg);text-align:left;cursor:pointer;font-size:inherit;flex-direction:row;align-items:center;gap:12px" data-act="gradOpen" data-id="' + rdy.id + '"><span style="flex-grow:1"><span class="kicker" style="display:block">Ready to graduate</span><span style="font-size:17px;font-weight:500">“' + esc(rdy.action) + '” is on autopilot now.</span></span>' + I.right + '</button>';
+  }
+  out += cards;
   if (!quiet()) out += weekStrip(next || act[0]) + goalBar(next || act[0]);
 
   var list = next ? act.filter(function(h){ return h.id !== next.id; }) : act;
@@ -852,16 +861,9 @@ views.today = function(){
     out += '<section class="stack" style="gap:8px"><h2 class="sec">' + (next ? 'Later today' : 'Today') + '</h2><div class="thread">' + list.map(function(h){ return node(h); }).join('') + '</div></section>';
   }
 
-  if (due) {
-    out += '<section class="card"><span class="kicker">Weekly check-in</span><h2>Did “' + esc(due.action) + '” start on its own this week?</h2>' +
-      '<div class="seg">' + [['Not yet',0],['Sometimes',1],['Yes',2]].map(function(c){ return '<button type="button" data-act="checkin" data-id="' + due.id + '" data-v="' + c[1] + '" aria-pressed="false">' + c[0] + '</button>'; }).join('') + '</div></section>';
-  }
-  if (rdy) {
-    out += '<button type="button" class="card" style="border:0;color:var(--fg);text-align:left;cursor:pointer;font-size:inherit;flex-direction:row;align-items:center;gap:12px" data-act="gradOpen" data-id="' + rdy.id + '"><span style="flex-grow:1"><span class="kicker" style="display:block">Ready to graduate</span><span style="font-size:17px;font-weight:500">“' + esc(rdy.action) + '” just happens now.</span></span>' + I.right + '</button>';
-  }
   var ns = nextShot();
   if (ns && !due && !rdy) {
-    out += '<button type="button" class="card" style="border:0;color:var(--fg);text-align:left;cursor:pointer;font-size:inherit;flex-direction:row;align-items:center;gap:12px" data-act="openShot" data-id="' + ns.id + '"><span style="flex-grow:1"><span class="kicker" style="display:block">' + (recShots().indexOf(ns.id) >= 0 ? 'Picked for you · 30 seconds' : 'A 30-second shot') + '</span><span style="font-size:17px;font-weight:500">' + esc(ns.t) + '</span></span>' + I.right + '</button>';
+    out += '<button type="button" class="card" style="border:0;color:var(--fg);text-align:left;cursor:pointer;font-size:inherit;flex-direction:row;align-items:center;gap:12px" data-act="openShot" data-id="' + ns.id + '"><span style="flex-grow:1"><span class="kicker" style="display:block">' + (recShots().indexOf(ns.id) >= 0 ? 'Picked for you · 30 seconds' : 'Quick read · 30 seconds') + '</span><span style="font-size:17px;font-weight:500">' + esc(ns.t) + '</span></span>' + I.right + '</button>';
   }
   if (!storageOk) out += '<p class="small muted">This browser can\'t save data, so your habits last only until you close the tab.</p>';
 
@@ -888,11 +890,11 @@ views.free = function(){
   '<div class="stack" style="gap:2px"><h1 class="sec" id="h" tabindex="-1" style="font-weight:400;font-size:17px">I have</h1><div class="durs" role="group" aria-label="How many minutes you have">' +
     [2, 10, 30].map(function(m){ return '<button type="button" data-act="dur" data-m="' + m + '" aria-pressed="' + (F.mins === m ? 'true' : 'false') + '" aria-label="' + m + ' minutes">' + m + '</button>'; }).join('') +
     '<span class="muted" style="font-size:17px">minutes</span></div></div>' +
-  '<p class="muted">One good thing before the feed picks for you.</p>' +
+  '<p class="muted">Do one good thing before you open the feed.</p>' +
   '<div class="rows">' + OPTS.map(function(o, i){
     return '<button type="button" class="rowbtn" data-act="startItem" data-i="' + i + '"><span class="t"><span>' + esc(o.title) + '</span><span class="n">' + esc(o.note) + '</span></span><span class="mins">' + o.m + ' min</span>' + I.right + '</button>';
   }).join('') + '</div>' +
-  '<div class="spacer"></div><button type="button" class="link" data-act="go" data-to="today">Nothing, I\'ll just sit for a bit</button>';
+  '<div class="spacer"></div><button type="button" class="link" data-act="go" data-to="today">No thanks, I\'ll just relax</button>';
 };
 
 function clockText(left){ return Math.floor(left / 60) + ':' + z2(left % 60); }
@@ -903,7 +905,7 @@ views.doing = function(){
   '<div class="stack" style="gap:6px"><span class="muted" style="font-size:15px">' + (it.hid ? 'Your habit · ' : '') + (total / 60) + ' minutes</span><h1 class="h1" id="h" tabindex="-1">' + esc(it.title) + '.</h1></div>' +
   '<div class="stack" style="gap:20px;padding-top:24px"><div class="clock" id="clock">' + clockText(TM.left) + '</div>' +
   '<div class="track" aria-hidden="true"><i style="left:0;top:8px;width:100%;height:4px;border-radius:2px;background:var(--track)"></i><i id="bar" style="left:0;top:8px;width:' + pct + ';height:4px;border-radius:2px;background:var(--accent)"></i><i id="knot" style="top:0;left:calc(' + pct + ' - 10px);width:20px;height:20px;border-radius:50%;background:var(--accent);border:3px solid var(--bg)"></i></div>' +
-  '<p class="muted">' + (it.hid ? 'Finishing counts as a vote for this habit.' : 'Leave the phone in your pocket if you can.') + '</p></div>' +
+  '<p class="muted">' + (it.hid ? 'Finishing counts as today\'s habit.' : 'Leave the phone in your pocket if you can.') + '</p></div>' +
   '<div class="spacer"></div><div class="stack">' + bigBtn(lbl, 'tstart', TM.left === 0 ? 'disabled style="opacity:.6"' : '') + '<button type="button" class="link strong" data-act="tdone">I\'m done</button></div>';
 };
 function paintTimer(){
@@ -919,7 +921,7 @@ function tick(){
   if (!TM || !TM.running) return;
   TM.left = Math.max(0, Math.ceil((TM.endAt - Date.now()) / 1000));
   paintTimer();
-  if (TM.left <= 0) { TM.running = false; stopTimer(); render(false); toast('Time is up. Well done.'); }
+  if (TM.left <= 0) { TM.running = false; stopTimer(); render(false); toast('Time’s up. Nice work.'); }
 }
 
 /* rings + tally */
@@ -967,11 +969,11 @@ views.habit = function(){
   var name = h.who ? '<span class="dim">Becoming</span><br>' + esc(h.who) + '.' : esc(cap(h.action)) + '.';
   var out = '<div class="topbar">' + back(LASTTAB, TABNAME[LASTTAB]) + '<button type="button" class="navlink" data-act="edit">Edit</button></div>' +
   '<div class="stack" style="gap:8px"><h1 class="h1" id="h" tabindex="-1">' + name + '</h1><p class="muted" style="font-size:15px">' + esc(cue(h)) + ', ' + esc(h.action) + '. ' + tot + (tot === 1 ? ' time' : ' times') + ' since ' + esc(new Date(h.created + 'T00:00:00').toLocaleDateString(undefined, {day:'numeric', month:'short'})) + '.</p></div>' +
-  '<div class="rings">' + ringsSvg(h) + '<div class="stack" style="gap:6px"><h2 style="font-size:17px;font-weight:700">Week ' + wk + '</h2><p class="small muted">One ring a week, thicker when you did it on more days. Habits settle anywhere from 3 weeks to 8 months, so keep going at your own pace.</p></div></div>' +
-  '<section class="stack" style="gap:10px"><div style="display:flex;justify-content:space-between;align-items:baseline"><h2 class="sec">Last ' + l[1] + ' days</h2><span style="font-size:15px"><b>' + l[0] + '</b> of ' + l[1] + ' days</span></div>' + tally(h) + '<p class="small muted">Short marks are days it slipped. They stay small and nothing resets.</p></section>' +
-  '<section class="stack" style="gap:10px"><h2 style="font-size:17px;font-weight:500">This week, did it start on its own?</h2><div class="seg" role="group" aria-label="Weekly check-in">' +
+  '<div class="rings">' + ringsSvg(h) + '<div class="stack" style="gap:6px"><h2 style="font-size:17px;font-weight:700">Week ' + wk + '</h2><p class="small muted">Each ring is one week. The more days you did it, the thicker the ring. Habits can take anywhere from 3 weeks to 8 months, so go at your own pace.</p></div></div>' +
+  '<section class="stack" style="gap:10px"><div style="display:flex;justify-content:space-between;align-items:baseline"><h2 class="sec">Last ' + l[1] + ' days</h2><span style="font-size:15px"><b>' + l[0] + '</b> of ' + l[1] + ' days</span></div>' + tally(h) + '<p class="small muted">Short marks are days you missed. Nothing resets.</p></section>' +
+  '<section class="stack" style="gap:10px"><h2 style="font-size:17px;font-weight:500">Do you do it without having to think about it?</h2><div class="seg" role="group" aria-label="Weekly check-in">' +
     [['Not yet',0],['Sometimes',1],['Yes',2]].map(function(c){ return '<button type="button" data-act="checkin" data-id="' + h.id + '" data-v="' + c[1] + '" aria-pressed="' + (tw && tw.v === c[1] ? 'true' : 'false') + '">' + c[0] + '</button>'; }).join('') +
-  '</div><p class="small muted">Three yeses in a row and it graduates off your list.</p></section>';
+  '</div><p class="small muted">Say yes three weeks in a row and it graduates off your list.</p></section>';
   if (ready(h)) out += '<button type="button" class="cta" data-act="gradOpen" data-id="' + h.id + '"><span>Graduate this habit</span><span class="dot">' + I.arrow + '</span></button>';
   out += '<div class="spacer"></div>';
   if (CONF.remove) out += '<div class="card"><h2>Remove this habit?</h2><p class="small muted">Its history is deleted and can\'t be brought back.</p><div class="seg" style="grid-template-columns:1fr 1fr"><button type="button" data-act="removeYes" data-id="' + h.id + '" style="background:var(--danger);color:var(--bg);font-weight:700">Remove</button><button type="button" data-act="removeNo">Keep it</button></div></div>';
@@ -985,23 +987,23 @@ views.graduate = function(){
   var tot = Object.keys(h.log).length;
   return '<div class="topbar">' + back('list', 'Habits') + '</div>' +
   '<svg width="112" height="112" viewBox="0 0 200 200" role="img" aria-label="A full set of growth rings" style="align-self:flex-start"><circle cx="100" cy="100" r="9" fill="var(--accent)"/>' + [22, 37, 53, 70, 88].map(function(r, i){ return '<circle cx="100" cy="100" r="' + r + '" fill="none" stroke="var(--accent)" stroke-width="' + (5 + i * 1.3) + '"/>'; }).join('') + '</svg>' +
-  '<div class="stack" style="gap:12px"><h1 class="h1" id="h" tabindex="-1"><span class="dim">' + esc(cap(h.action)) + '</span><br>has graduated.</h1><p class="lead muted">Three weeks running, you said it just happens. It doesn\'t need a place on your list anymore.</p></div>' +
+  '<div class="stack" style="gap:12px"><h1 class="h1" id="h" tabindex="-1"><span class="dim">' + esc(cap(h.action)) + '</span><br>has graduated.</h1><p class="lead muted">For three weeks in a row, you said you do it without thinking. It doesn\'t need a spot on your list anymore.</p></div>' +
   '<section class="card"><span class="muted" style="font-size:15px">' + esc(cue(h)) + ', ' + esc(h.action) + '.</span><div class="stats"><div><b>' + tot + '</b><span>times</span></div><div><b>' + age(h) + '</b><span>days</span></div><div><b>' + esc(new Date(h.created + 'T00:00:00').toLocaleDateString(undefined, {day:'numeric', month:'short'})) + '</b><span>started</span></div></div></section>' +
   '<div class="spacer"></div><div class="stack">' + bigBtn('Take it off my list', 'gradYes', 'data-id="' + h.id + '"') + '<button type="button" class="link" data-act="gradLater" data-id="' + h.id + '">Keep it a little longer</button></div>' +
-  '<p class="small muted" style="text-align:center">A slot opens up. You can build up to three habits at once, so each one gets real attention.</p>';
+  '<p class="small muted" style="text-align:center">This opens a spot. You can work on up to three habits at a time.</p>';
 };
 
 views.list = function(){
   var act = active(), gr = graduated(), full = act.length >= 3, ex = S.habits.some(function(h){ return h.example; });
   var out = '<div class="topbar"><span></span><button type="button" class="navlink" data-act="go" data-to="settings">Settings</button></div>' +
-  '<div class="stack" style="gap:8px"><h1 class="h1" id="h" tabindex="-1">Your habits.</h1><p class="muted">Up to three at a time, so each one gets real attention.</p></div>';
+  '<div class="stack" style="gap:8px"><h1 class="h1" id="h" tabindex="-1">Your habits.</h1><p class="muted">Up to three at a time, so each one gets your full attention.</p></div>';
   if (ex) out += '<div class="card"><p class="small muted" style="font-size:15px">These are example habits. Clear them whenever you\'re ready to start your own.</p><button type="button" class="link left accent" style="min-height:44px" data-act="clearExamples">Clear the examples</button></div>';
   out += '<section class="stack" style="gap:4px"><h2 class="sec">Building now · ' + act.length + ' of 3</h2>' +
     (act.length ? '<div class="rows">' + act.map(function(h){
       var r = ready(h);
-      return '<button type="button" class="rowbtn" data-act="openHabit" data-id="' + h.id + '"><span class="t"><span>' + esc(cap(h.who || h.action)) + '</span><span class="n ' + (r ? 'hot' : '') + '">' + (r ? 'Ready to graduate · 3 yeses in a row' : esc(cue(h)) + ' · week ' + weekNum(h)) + '</span></span>' + I.right + '</button>';
+      return '<button type="button" class="rowbtn" data-act="openHabit" data-id="' + h.id + '"><span class="t"><span>' + esc(cap(h.who || h.action)) + '</span><span class="n ' + (r ? 'hot' : '') + '">' + (r ? 'Ready to graduate · 3 weeks of yes' : esc(cue(h)) + ' · week ' + weekNum(h)) + '</span></span>' + I.right + '</button>';
     }).join('') + '</div>' : '<p class="muted small">Nothing yet.</p>') +
-    (full ? '<p class="small muted" style="padding-top:8px">All three slots are full. When a habit graduates, a slot opens for the next one.</p>' : '<div style="padding-top:12px">' + cta('Add a habit', 'start') + '</div>') + '</section>';
+    (full ? '<p class="small muted" style="padding-top:8px">All three slots are full. When a habit graduates, you can add a new one.</p>' : '<div style="padding-top:12px">' + cta('Add a habit', 'start') + '</div>') + '</section>';
   if (gr.length) out += '<section class="stack" style="gap:4px"><h2 class="sec">Graduated</h2><div class="rows">' + gr.map(function(h){
     return '<button type="button" class="rowbtn" data-act="openHabit" data-id="' + h.id + '"><span class="t"><span style="color:var(--muted)">' + esc(cap(h.who || h.action)) + '</span><span class="n">' + esc(cue(h)) + ' · ' + Object.keys(h.log).length + ' times</span></span>' + I.right + '</button>';
   }).join('') + '</div></section>';
@@ -1075,8 +1077,8 @@ views.ask = function(){
 views.learned = function(){
   var nm = S.profile && S.profile.name, ins = insights();
   return '<div class="topbar">' + back('ask', 'Back', QS.length - 1) + '<span class="small muted">About you</span></div>' +
-    '<div class="trow rise" style="--i:0"><span class="tbtn" style="cursor:default">' + buddy('cheer', 76, true) + '</span><p class="bubble">' + (nm ? 'Thanks, ' + esc(nm) + '. Here’s what I heard.' : 'Thanks. Here’s what I heard.') + '</p></div>' +
-    '<h1 class="h1 sm rise" id="h" tabindex="-1" style="--i:1">Here’s how I’ll<br><span class="dim">help you.</span></h1>' +
+    '<div class="trow rise" style="--i:0"><span class="tbtn" style="cursor:default">' + buddy('cheer', 76, true) + '</span><p class="bubble">' + (nm ? 'Thanks, ' + esc(nm) + '. Here’s what I noticed.' : 'Thanks. Here’s what I noticed.') + '</p></div>' +
+    '<h1 class="h1 sm rise" id="h" tabindex="-1" style="--i:1">Your plan,<br><span class="dim">in short.</span></h1>' +
     ins.map(function(x, k){ return '<div class="card rise" style="--i:' + (2 + k) + '"><span class="kicker">' + esc(x.k) + '</span><p style="font-size:17px;line-height:1.45">' + esc(x.t) + '</p></div>'; }).join('') +
     '<div class="spacer"></div><div class="stack stickycta rise" style="--i:' + (2 + ins.length) + '">' + cta(S.seen ? 'Back to Today' : 'Pick my first habit', 'learnedGo') +
     '<button type="button" class="link" data-act="go" data-to="ask" data-i="0">Change my answers</button></div>';
@@ -1087,12 +1089,12 @@ views.missed = function(){
   if (!h) return views.today();
   var sc = slipCount(h), m = sc[0], n = sc[1];
   return '<div class="topbar">' + back('today', 'Today') + '</div>' +
-    '<div class="trow rise" style="--i:0"><span class="tbtn" style="cursor:default">' + buddy('idle', 76) + '</span><p class="bubble">Hey, it happens to everyone.</p></div>' +
-    '<div class="stack rise" style="gap:14px;--i:1"><h1 class="h1" id="h" tabindex="-1"><span class="dim">Yesterday slipped.</span><br>That’s fine.</h1><p class="lead muted">One missed day barely matters. What helps is not missing twice, so today’s version is smaller.</p></div>' +
+    '<div class="trow rise" style="--i:0"><span class="tbtn" style="cursor:default">' + buddy('idle', 76) + '</span><p class="bubble">Missing a day happens to everyone.</p></div>' +
+    '<div class="stack rise" style="gap:14px;--i:1"><h1 class="h1" id="h" tabindex="-1"><span class="dim">You missed yesterday.</span><br>No big deal.</h1><p class="lead muted">One missed day barely changes anything. The trick is not missing two in a row, so today’s version is smaller.</p></div>' +
     '<section class="card rise" style="padding:20px;--i:2"><span class="kicker">Today’s small version</span><p style="font-size:28px;font-weight:800;line-height:1.1;letter-spacing:-.02em">' + esc(cap(h.small)) + '.</p><p class="small muted" style="font-size:15px">' + esc(cue(h)) + '</p></section>' +
-    '<div class="stack rise" style="--i:3">' + bigBtn('Keep today small', 'go', 'data-to="today"') + '<button type="button" class="link" data-act="full" data-id="' + h.id + '" data-back="1">Do the full version instead</button></div>' +
+    '<div class="stack rise" style="--i:3">' + bigBtn('Got it', 'go', 'data-to="today"') + '<button type="button" class="link" data-act="full" data-id="' + h.id + '" data-back="1">Do the full version instead</button></div>' +
     '<div class="spacer"></div>' +
-    (n >= 3 && m >= 3 ? '<section class="stack rise" style="gap:6px;padding-top:20px;border-top:1px solid var(--line);--i:4"><h2 style="font-size:17px;font-weight:700">It slipped ' + m + ' of the last ' + n + ' days</h2><p class="small muted" style="font-size:15px;line-height:1.5">When a habit keeps slipping, the moment is usually the problem, not you. ' + esc(cap(h.moment)) + ' may be too busy or too unpredictable.</p><button type="button" class="navlink" style="min-height:48px;align-self:flex-start;padding:0" data-act="missedEdit" data-id="' + h.id + '">Hook it to a calmer moment' + I.right + '</button></section>' : '');
+    (n >= 3 && m >= 3 ? '<section class="stack rise" style="gap:6px;padding-top:20px;border-top:1px solid var(--line);--i:4"><h2 style="font-size:17px;font-weight:700">You’ve missed ' + m + ' of the last ' + n + ' days</h2><p class="small muted" style="font-size:15px;line-height:1.5">When a habit keeps slipping, the timing is usually the problem, not you. “' + esc(cue(h)) + '” might be too rushed or unpredictable.</p><button type="button" class="navlink" style="min-height:48px;align-self:flex-start;padding:0" data-act="missedEdit" data-id="' + h.id + '">Pick a different moment' + I.right + '</button></section>' : '');
 };
 /* ---------- render ---------- */
 function render(focus){
@@ -1130,7 +1132,7 @@ function makeExamples(){
 }
 
 function celebrate(h, kind){
-  var w = h.who ? h.who : 'who you’re becoming', pool = ['One vote for ' + w + '.', 'That counts. Nicely done.', 'Another knot tied.', 'Look at you, being ' + w + '.'];
+  var w = h.who ? h.who : 'who you’re becoming', pool = ['Nice one.', 'Done. Easy, right?', 'That’s another day done.', 'Good stuff. See you tomorrow.'];
   CEL = {until:Date.now() + 8000, msg: kind === 'small' ? 'The small version counts. Nothing resets.' : pool[Math.floor(Math.random() * pool.length)]};
 }
 function act(a, el){
@@ -1189,7 +1191,7 @@ function act(a, el){
     case 'save': {
       var s = (D.small || '').trim() || 'do the first minute of it';
       var h = {id:uid(), moment:D.momentFinal, action:D.actionFinal, small:s.replace(/[.!]+$/, ''), m:D.mins || 5, who:(D.who || '').trim(), created:todayStr(), log:{}, checks:[], status:'active'};
-      S.habits.push(h); S.seen = true; save(); if (D.obFrom || S.habits.length === 1) CEL = {until:Date.now() + 9000, msg:'First knot tied' + (S.profile.name ? ', ' + S.profile.name : '') + '. I’ll be here when the moment comes.'}; go('today'); if (!CEL || Date.now() > CEL.until) toast('Habit added.'); break; }
+      S.habits.push(h); S.seen = true; save(); if (D.obFrom || S.habits.length === 1) CEL = {until:Date.now() + 9000, msg:'You’re all set' + (S.profile.name ? ', ' + S.profile.name : '') + '. Tap Done once you’ve done it.'}; go('today'); if (!CEL || Date.now() > CEL.until) toast('Habit added.'); break; }
     case 'toggle': {
       var hh = byId(ds.id), t = todayStr();
       if (hh.log[t]) { delete hh.log[t]; save(); render(false); }
@@ -1218,7 +1220,7 @@ function act(a, el){
     case 'removeNo': CONF.remove = false; render(false); break;
     case 'removeYes': S.habits = S.habits.filter(function(x){ return x.id !== ds.id; }); save(); go('list'); toast('Habit removed.'); break;
     case 'gradOpen': go('graduate', {id:ds.id}); break;
-    case 'gradYes': { var g = byId(ds.id); g.status = 'graduated'; g.gradDate = todayStr(); save(); go('list'); toast('Graduated. A slot just opened.'); break; }
+    case 'gradYes': { var g = byId(ds.id); g.status = 'graduated'; g.gradDate = todayStr(); save(); go('list'); toast('Graduated. You can add a new habit now.'); break; }
     case 'gradLater': { var g2 = byId(ds.id); g2.deferred = todayStr(); save(); go('today'); toast('We\'ll ask again in two weeks.'); break; }
     case 'free': F.mins = F.mins || 10; go('free'); break;
     case 'dur': F.mins = +ds.m; render(false); break;
@@ -1295,5 +1297,3 @@ if (V === 'intro' && S.profile && S.profile.name) { var qc = quizCount(); if (qc
 render(false);
 })();
 </script>
-</body>
-</html>
