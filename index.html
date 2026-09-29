@@ -1,0 +1,1299 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Then: hook good habits onto moments you already have</title>
+<meta name="description" content="Then is a calm habit tool. Hook one tiny habit onto a moment you already have. No alarms, no streaks, nothing resets.">
+<meta name="theme-color" content="#141311">
+<link rel="icon" type="image/svg+xml" href="/assets/brand/then-app-icon.svg">
+<link rel="apple-touch-icon" href="/assets/brand/then-app-icon-192.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,700;12..96,800&amp;display=swap">
+<style>
+/* Layout: one narrow column, one thing at a time. Your day is drawn as a thread with a knot per habit. Dark-first, warm charcoal with amber. */
+:root{
+  --bg:#141311; --surface:#1F1D1A; --line:#2A2824; --track:#34312C;
+  --fg:#EFEAE0; --muted:#A39C8F; --dim:#6F695F;
+  --accent:#F29E4C; --accent-ink:#141311; --accent-text:#F29E4C; --focus:#F7B878; --danger:#E58A7A;
+  --font:'Bricolage Grotesque',system-ui,-apple-system,'Segoe UI',sans-serif;
+  color-scheme:dark;
+}
+@media (prefers-color-scheme: light){
+  :root:not([data-theme="dark"]){
+    --bg:#F4F1EC; --surface:#FFFFFF; --line:#E3DED5; --track:#D9D3C8;
+    --fg:#1F1C18; --muted:#5F584E; --dim:#8B8377;
+    --accent:#E8862A; --accent-ink:#1F1C18; --accent-text:#9A4A00; --focus:#9A4A00; --danger:#B23B2A;
+    color-scheme:light;
+  }
+}
+:root[data-theme="light"]{
+  --bg:#F4F1EC; --surface:#FFFFFF; --line:#E3DED5; --track:#D9D3C8;
+  --fg:#1F1C18; --muted:#5F584E; --dim:#8B8377;
+  --accent:#E8862A; --accent-ink:#1F1C18; --accent-text:#9A4A00; --focus:#9A4A00; --danger:#B23B2A;
+  color-scheme:light;
+}
+html,body{height:100%}
+body{background:var(--bg);color:var(--fg);font-family:var(--font);font-size:17px;line-height:1.4;-webkit-font-smoothing:antialiased}
+*{box-sizing:border-box}
+h1,h2,p{margin:0}
+button,input,select,textarea{font-family:inherit}
+:focus-visible{outline:3px solid var(--focus);outline-offset:3px}
+#h:focus{outline:none}
+
+#app{max-width:480px;margin:0 auto;min-height:100%;padding-inline:24px;padding-block:20px 32px;display:flex;flex-direction:column;gap:22px}
+.spacer{flex-grow:1}
+.stack{display:flex;flex-direction:column;gap:4px}
+.h1{font-size:clamp(34px,11.5vw,46px);font-weight:800;line-height:1.03;letter-spacing:-.025em;text-wrap:balance;overflow-wrap:anywhere}
+.h1.sm{font-size:clamp(30px,9vw,36px)}
+.h1.md{font-size:clamp(32px,10vw,40px)}
+.dim{color:var(--dim)}
+.muted{color:var(--muted)}
+.small{font-size:14px;line-height:1.45}
+.lead{font-size:17px;line-height:1.5}
+.lead b,.hl{color:var(--fg);font-weight:400}
+.sec{font-size:15px;font-weight:500;color:var(--muted)}
+
+.topbar{display:flex;justify-content:space-between;align-items:center;min-height:44px}
+.back,.navlink{display:inline-flex;align-items:center;gap:6px;min-height:44px;padding:0;border:0;background:none;color:var(--fg);font-size:16px;cursor:pointer}
+.navlink{color:var(--accent-text);font-weight:500;padding-inline:4px}
+.bars{display:flex;gap:6px}
+.bars span{flex-grow:1;height:4px;border-radius:2px;background:var(--track)}
+.bars span.on{background:var(--accent)}
+
+.cta{width:100%;min-height:64px;padding:6px 8px 6px 28px;border:0;border-radius:32px;background:var(--accent);color:var(--accent-ink);display:flex;align-items:center;justify-content:space-between;font-size:18px;font-weight:700;cursor:pointer;text-align:left}
+.cta .dot{flex-shrink:0;width:48px;height:48px;border-radius:50%;background:var(--accent-ink);color:var(--accent);display:flex;align-items:center;justify-content:center}
+.cta.done{padding:6px 28px 6px 6px;justify-content:flex-start;gap:14px}
+.cta.done .dot{width:52px;height:52px}
+.cta.quiet{background:var(--surface);color:var(--fg);border:1.5px solid var(--track);font-weight:500;font-size:17px}
+.cta.quiet .dot{background:var(--track);color:var(--accent-text)}
+.cta.plain{justify-content:center;padding:0 28px}
+.link{align-self:center;min-height:48px;padding:0 16px;border:0;background:none;color:var(--muted);font-size:16px;cursor:pointer}
+.link.strong{color:var(--fg);font-weight:500}
+.link.accent{color:var(--accent-text);font-weight:500}
+.link.danger{color:var(--danger)}
+.link.left{align-self:flex-start;padding-inline:0}
+
+.thread{margin-left:7px;border-left:2px solid var(--dim)}
+.node{position:relative;display:flex;align-items:center;gap:12px;padding:6px 0 6px 22px}
+.knot{position:absolute;left:-9px;top:50%;margin-top:-8px;width:16px;height:16px;border-radius:50%;background:var(--bg);border:2px solid var(--dim)}
+.node.is-done .knot{background:var(--accent);border-color:var(--accent)}
+.node .txt{flex-grow:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.node .cue{font-size:14px;color:var(--muted)}
+.node .act{font-size:19px;font-weight:500;overflow-wrap:anywhere}
+.node.is-done .act{color:var(--muted);text-decoration:line-through}
+.check{flex-shrink:0;width:44px;height:44px;border-radius:50%;border:2px solid var(--dim);background:transparent;color:transparent;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0}
+.check[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+
+.rows{border-top:1px solid var(--line)}
+.rowbtn{width:100%;min-height:64px;display:flex;align-items:center;gap:14px;padding:8px 0;border:0;border-bottom:1px solid var(--line);background:none;color:var(--fg);text-align:left;font-size:19px;font-weight:500;cursor:pointer;text-decoration:none}
+.rowbtn .t{flex-grow:1;min-width:0;display:flex;flex-direction:column;gap:2px;overflow-wrap:anywhere}
+.rowbtn .n{font-size:14px;font-weight:400;color:var(--muted)}
+.rowbtn .n.hot{color:var(--accent-text)}
+.rowbtn[data-act="pickMoment"] .n{color:var(--accent-text)}
+.rowbtn .mins{font-size:15px;font-weight:700;color:var(--accent-text)}
+.rowbtn[aria-pressed="true"]{font-weight:700}
+.radio{flex-shrink:0;width:26px;height:26px;border-radius:50%;border:2px solid var(--dim);display:flex;align-items:center;justify-content:center;color:transparent}
+.rowbtn[aria-pressed="true"] .radio{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.chev{flex-shrink:0;color:var(--muted)}
+.plainrow{display:flex;align-items:center;gap:14px;min-height:64px;padding:8px 0;border-bottom:1px solid var(--line)}
+.plainrow .t{flex-grow:1;min-width:0;display:flex;flex-direction:column;gap:2px;overflow-wrap:anywhere}
+.iconbtn{flex-shrink:0;width:44px;height:44px;border-radius:50%;border:0;background:none;color:var(--muted);display:flex;align-items:center;justify-content:center;cursor:pointer}
+
+.field{display:flex;flex-direction:column;gap:8px}
+.field label{font-size:14px;color:var(--muted)}
+.field label.big{font-size:16px;font-weight:500;color:var(--fg)}
+.field input,.field select,.field textarea{min-height:52px;padding:0 16px;border-radius:14px;border:1.5px solid var(--dim);background:var(--surface);color:var(--fg);font-size:17px;width:100%}
+.field textarea{padding:12px 16px;min-height:112px;font-size:14px;line-height:1.45;resize:vertical}
+.field input::placeholder,.field textarea::placeholder{color:var(--muted);opacity:1}
+.inline{display:flex;gap:8px;align-items:flex-end}
+.inline .field{flex-grow:1;min-width:0}
+.mini{min-height:52px;padding:0 18px;border-radius:14px;border:0;background:var(--fg);color:var(--bg);font-size:16px;font-weight:700;cursor:pointer}
+
+.card{background:var(--surface);border-radius:18px;padding:16px;display:flex;flex-direction:column;gap:10px}
+.card.row{flex-direction:row;align-items:flex-start;gap:14px}
+.card h2{font-size:17px;font-weight:700}
+.card .kicker{font-size:15px;font-weight:500;color:var(--accent-text)}
+.seg{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.seg button{min-height:48px;padding:0 6px;border:0;border-radius:24px;background:var(--track);color:var(--fg);font-size:15px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--fg);color:var(--bg);font-weight:700}
+.stats{display:flex;gap:28px;flex-wrap:wrap}
+.stats div{display:flex;flex-direction:column}
+.stats b{font-size:24px;font-weight:800;line-height:1.2}
+.stats span{font-size:14px;color:var(--muted)}
+
+.durs{display:flex;align-items:baseline;gap:20px;flex-wrap:wrap}
+.durs button{min-width:48px;min-height:64px;padding:0;border:0;border-bottom:4px solid transparent;background:none;color:var(--dim);font-size:clamp(56px,20vw,72px);font-weight:800;line-height:1;letter-spacing:-.03em;cursor:pointer}
+.durs button[aria-pressed="true"]{color:var(--fg);border-bottom-color:var(--accent)}
+.clock{font-size:clamp(64px,26vw,96px);font-weight:800;line-height:1;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.track{position:relative;height:20px}
+.track i{position:absolute;display:block}
+.tally{display:flex;justify-content:space-between;align-items:flex-end;height:28px}
+.tally i{display:block;width:3px;border-radius:2px}
+.rings{display:flex;align-items:center;gap:18px}
+.rings svg{flex-shrink:0;width:min(176px,44vw);height:auto}
+
+
+.art{margin:0;background:var(--surface);border-radius:22px;padding:14px 10px 10px}
+.art svg{display:block;width:100%;height:auto;overflow:visible}
+.art .l{fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
+.art .w4{stroke-width:4.5}.art .w6{stroke-width:6}
+.sa{stroke:var(--accent-text)}.sf{stroke:var(--fg)}.sd{stroke:var(--dim)}.sx{stroke:var(--danger)}
+.fa{fill:var(--accent-text)}.ff{fill:var(--fg)}.fm{fill:var(--muted)}.fx{fill:var(--danger)}
+.art text{font-family:var(--font);font-size:15px}
+.dr{stroke-dasharray:1 1;stroke-dashoffset:1;animation:draw var(--t,.8s) cubic-bezier(.4,0,.2,1) both;animation-delay:var(--d,0s)}
+@keyframes draw{to{stroke-dashoffset:0}}
+.fd{opacity:0;animation:fade .5s ease both;animation-delay:var(--d,0s)}
+@keyframes fade{to{opacity:1}}
+.rowbtn .num{flex-shrink:0;width:26px;font-size:15px;font-weight:700;color:var(--muted);font-variant-numeric:tabular-nums}
+.rowbtn .seen{flex-shrink:0;display:flex;color:var(--accent-text)}
+.navrow{display:flex;gap:4px}
+
+/* brand, mascot, onboarding, home */
+:root{--accent-deep:#D9822F}
+@media (prefers-color-scheme: light){:root:not([data-theme="dark"]){--accent-deep:#C96F12}}
+:root[data-theme="light"]{--accent-deep:#C96F12}
+.anim .rise{animation:rise .55s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i,0) * 90ms)}
+@keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.reveal{animation:reveal 1.1s ease-out .3s both}
+@keyframes reveal{from{clip-path:inset(0 0 100% 0)}to{clip-path:inset(0 0 0 0)}}
+.wm{font-size:44px;font-weight:800;letter-spacing:-.04em;line-height:1}
+.wm i{font-style:normal;color:var(--accent-text)}
+.ob0{display:flex;flex-direction:column;align-items:center;gap:10px;padding-top:12px}
+.ob-t{display:flex;justify-content:center}
+.center{text-align:center}
+.pills{display:flex;flex-wrap:wrap;gap:8px}
+.pill{display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:0 14px;border-radius:18px;border:1.5px solid var(--track);font-size:15px;color:var(--fg)}
+.pill svg{color:var(--accent-text)}
+.trow{display:flex;align-items:center;gap:8px}
+.tbtn{flex-shrink:0;border:0;background:none;padding:0;min-width:44px;min-height:44px;cursor:pointer;border-radius:24px}
+.bubble{position:relative;background:var(--surface);border-radius:18px;padding:12px 16px;font-size:16px;line-height:1.4;flex-grow:1}
+.bubble::before{content:"";position:absolute;left:-6px;top:50%;margin-top:-6px;width:12px;height:12px;background:var(--surface);transform:rotate(45deg);border-radius:2px}
+.buddy{display:block;overflow:visible}
+.logo{border-radius:22%;box-shadow:0 0 0 1.5px var(--line);flex-shrink:0}
+.tl-body{transform-box:fill-box;transform-origin:50% 100%;animation:bob 3.4s ease-in-out infinite}
+@keyframes bob{50%{transform:translateY(-3px)}}
+.buddy.pop .tl-body{animation:pop .8s cubic-bezier(.3,1.6,.5,1) .15s both,bob 3.4s ease-in-out .95s infinite}
+@keyframes pop{from{transform:scale(.2) translateY(30px);opacity:0}to{transform:none;opacity:1}}
+.tbtn.poked .tl-body{animation:poke .5s ease both}
+@keyframes poke{30%{transform:scale(1.08,.9)}60%{transform:scale(.96,1.06) translateY(-6px)}100%{transform:none}}
+.tl-eyes{transform-box:fill-box;transform-origin:center;animation:blink 5s infinite}
+@keyframes blink{0%,93%,100%{transform:scaleY(1)}96%{transform:scaleY(.08)}}
+.pup{transform:translate(var(--px,0px),var(--py,1.5px));transition:transform .12s ease-out}
+.tl-tail{fill:none;stroke:var(--muted);stroke-width:3.5;stroke-linecap:round}
+.arm{stroke:var(--accent-deep);fill:none;stroke-width:8;stroke-linecap:round}
+.arm-wave{transform-box:fill-box;transform-origin:0% 100%;animation:wave .8s ease-in-out infinite alternate}
+@keyframes wave{from{transform:rotate(-10deg)}to{transform:rotate(14deg)}}
+.spark{fill:none;stroke:var(--accent-text);stroke-width:3;stroke-linecap:round;animation:twinkle 1.6s ease-out both;animation-delay:var(--d,0s)}
+@keyframes twinkle{0%{opacity:0;transform:scale(.2)}40%{opacity:1;transform:scale(1.1)}100%{opacity:.85;transform:scale(1)}}
+.spark{transform-box:fill-box;transform-origin:center}
+.hd{display:flex;align-items:center;gap:12px;min-height:48px}
+.hd .who{flex-grow:1;min-width:0;display:flex;flex-direction:column}
+.hd .who b{font-size:17px;font-weight:600;line-height:1.2}
+.hd .who span{font-size:14px;color:var(--muted)}
+.week{display:flex;justify-content:space-between;align-items:flex-end;gap:4px}
+.wk{display:flex;flex-direction:column;align-items:center;gap:6px;flex:1}
+.wk b{font-size:13px;font-weight:500;color:var(--muted)}
+.wd{display:block;width:24px;height:24px;border-radius:50%;border:2px solid var(--track)}
+.wd.f{background:var(--accent);border-color:var(--accent)}
+.wd.s{border-color:var(--accent);background:radial-gradient(circle,var(--accent) 42%,transparent 46%)}
+.wd.t{border-color:var(--fg)}
+.wd.pre{border-style:dashed;opacity:.5}
+.goal{display:flex;flex-direction:column;gap:8px}
+.gb{height:6px;border-radius:3px;background:var(--track);overflow:hidden}
+.gb i{display:block;height:100%;background:var(--accent);border-radius:3px}
+.tabs{position:fixed;left:0;right:0;bottom:0;z-index:4;background:var(--bg);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px)}
+.tabs div{max-width:480px;margin:0 auto;display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}
+.tab{min-height:60px;border:0;background:none;color:var(--muted);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:13px;cursor:pointer}
+.tab[aria-current="page"]{color:var(--accent-text);font-weight:700}
+#app.has-tabs{padding-bottom:calc(92px + env(safe-area-inset-bottom,0px))}
+.stickycta{position:sticky;bottom:0;padding:16px 0 calc(8px + env(safe-area-inset-bottom,0px));background:linear-gradient(to bottom,transparent,var(--bg) 28%)}
+.tabs-on .toast{top:auto;bottom:calc(72px + env(safe-area-inset-bottom,0px))}
+.forme{color:var(--accent-text)}
+.lock{display:flex;gap:12px;align-items:flex-start}
+.toast[hidden]{display:none}
+.toast{position:fixed;left:16px;right:16px;top:calc(12px + env(safe-area-inset-top,0px));max-width:448px;margin:0 auto;background:var(--fg);color:var(--bg);border-radius:16px;padding:6px 8px 6px 16px;display:flex;gap:12px;align-items:center;justify-content:space-between;font-size:16px;z-index:5}
+.toast button{min-height:44px;padding:0 12px;border:0;background:none;color:var(--bg);font-size:16px;font-weight:700;text-decoration:underline;cursor:pointer}
+@media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}.dr{stroke-dashoffset:0!important}.fd{opacity:1!important}.pup{transition:none!important}}
+button{transition:background-color .15s,border-color .15s,color .15s}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+<script>
+(function(){
+'use strict';
+
+/* ---------- helpers ---------- */
+var $ = function(s){ return document.querySelector(s); };
+var esc = function(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); };
+var cap = function(s){ s = String(s || ''); return s.charAt(0).toUpperCase() + s.slice(1); };
+var z2 = function(n){ return String(n).length < 2 ? '0' + n : String(n); };
+function ymd(d){ return d.getFullYear() + '-' + z2(d.getMonth() + 1) + '-' + z2(d.getDate()); }
+function addDays(s, n){ var p = s.split('-').map(Number); return ymd(new Date(p[0], p[1] - 1, p[2] + n)); }
+function diffDays(a, b){ var pa = a.split('-').map(Number), pb = b.split('-').map(Number); return Math.round((Date.UTC(pb[0], pb[1] - 1, pb[2]) - Date.UTC(pa[0], pa[1] - 1, pa[2])) / 864e5); }
+function todayStr(){ return ymd(new Date()); }
+function uid(){ return 'h' + Date.now().toString(36) + Math.floor(Math.random() * 1e4).toString(36); }
+
+var I = {
+  left:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>',
+  right:'<svg class="chev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>',
+  arrow:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>',
+  check:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
+  checkS:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
+  plus:'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>',
+  replay:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.6-5.9"/><path d="M20 4v5h-5"/></svg>',
+  gear:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3h0a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8v0a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>',
+  tToday:'<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8" cy="6" r="2.5"/><path d="M8 8.5V15a3 3 0 0 0 3 3h2"/><circle cx="16.5" cy="18" r="3" fill="currentColor"/></svg>',
+  tShots:'<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v3M12 18v3M3 12h3M18 12h3M6 6l2 2M16 16l2 2M18 6l-2 2M8 16l-2 2"/><circle cx="12" cy="12" r="2"/></svg>',
+  tHabits:'<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1" fill="currentColor"/><circle cx="4.5" cy="12" r="1" fill="currentColor"/><circle cx="4.5" cy="18" r="1" fill="currentColor"/></svg>',
+  lock:'<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--accent-text)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink:0"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>',
+  x:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>'
+};
+
+/* ---------- storage ---------- */
+var KEY = 'then.v1';
+var storageOk = true;
+function fresh(){ return { v:1, seen:false, theme:'system', habits:[], shotsRead:{}, profile:{name:''}, likes:[{t:'Tidy one surface',m:8},{t:'Text someone you miss',m:5}] }; }
+function load(){
+  try {
+    localStorage.setItem('then.t', '1'); localStorage.removeItem('then.t');
+    var r = localStorage.getItem(KEY);
+    if (r) { var s = JSON.parse(r); if (s && Array.isArray(s.habits)) { s.likes = Array.isArray(s.likes) ? s.likes : []; s.shotsRead = s.shotsRead && typeof s.shotsRead === 'object' ? s.shotsRead : {}; s.profile = s.profile && typeof s.profile === 'object' ? s.profile : {name:''}; return s; } }
+  } catch (e) { storageOk = false; }
+  return fresh();
+}
+var S = load();
+function save(){ try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { storageOk = false; } }
+function applyTheme(){
+  var r = document.documentElement;
+  if (S.theme === 'light' || S.theme === 'dark') r.setAttribute('data-theme', S.theme); else r.removeAttribute('data-theme');
+}
+
+/* ---------- domain ---------- */
+var MOMENTS = ['I wake up','I pour my coffee','I get on the train','I finish lunch','I get home','I brush my teeth'];
+var ACTIONS = [
+  {a:'read two pages', s:'read one paragraph', m:2, who:'a reader'},
+  {a:'stretch for one minute', s:'touch my toes once', m:1, who:'someone who moves'},
+  {a:'write one line in a journal', s:'write one word', m:2, who:'a writer'},
+  {a:'drink a glass of water', s:'take one sip', m:1, who:'someone who looks after themselves'},
+  {a:'do five push-ups', s:'do one push-up', m:1, who:'someone strong'},
+  {a:'walk for ten minutes', s:'walk to the corner and back', m:10, who:'a walker'}
+];
+function active(){ return S.habits.filter(function(h){ return h.status === 'active'; }); }
+function graduated(){ return S.habits.filter(function(h){ return h.status === 'graduated'; }); }
+function cue(h){ return 'After ' + h.moment; }
+function byId(id){ for (var i = 0; i < S.habits.length; i++) if (S.habits[i].id === id) return S.habits[i]; return null; }
+function age(h){ return diffDays(h.created, todayStr()) + 1; }
+function slipped(h){ var t = todayStr(), y = addDays(t, -1); return h.created < y && !h.log[y] && !h.log[t] && !FULL[h.id]; }
+function slipCount(h){
+  var t = todayStr(), n = Math.min(10, diffDays(h.created, t)), m = 0;
+  for (var d = 1; d <= n; d++) if (!h.log[addDays(t, -d)]) m++;
+  return [m, n];
+}
+function last42(h){
+  var t = todayStr(), n = Math.min(42, age(h)), c = 0;
+  for (var d = 0; d < n; d++) if (h.log[addDays(t, -d)]) c++;
+  return [c, n];
+}
+function checkDue(h){
+  if (age(h) < 7) return false;
+  var c = h.checks || [];
+  return !c.length || diffDays(c[c.length - 1].d, todayStr()) >= 7;
+}
+function ready(h){
+  var c = h.checks || [];
+  if (c.length < 3) return false;
+  if (h.deferred && diffDays(h.deferred, todayStr()) < 14) return false;
+  return c.slice(-3).every(function(x){ return x.v === 2; });
+}
+function thisWeekCheck(h){
+  var c = h.checks || [];
+  if (!c.length) return null;
+  var l = c[c.length - 1];
+  return diffDays(l.d, todayStr()) < 7 ? l : null;
+}
+function weekNum(h){ return Math.floor((age(h) - 1) / 7) + 1; }
+
+/* ---------- shots: short lessons with line drawings ---------- */
+function vis(s, at){ var a = Array.isArray(at) ? at[0] : at, b = Array.isArray(at) ? at[1] : 9; return s >= a && s <= b; }
+function isNew(s, at){ return s === (Array.isArray(at) ? at[0] : at); }
+/* drawn stroke: s = current frame, at = frame (or [from,to]) it shows in, d = delay, t = duration */
+function ln(s, at, d, c, tag, attrs, t){
+  if (!vis(s, at)) return '';
+  var a = isNew(s, at);
+  return '<' + tag + ' class="l ' + c + (a ? ' dr' : '') + '" pathLength="1"' + (a ? ' style="--d:' + d + 's' + (t ? ';--t:' + t + 's' : '') + '"' : '') + ' ' + attrs + '/>';
+}
+/* faded item (fills, text) */
+function fx(s, at, d, c, tag, attrs, inner){
+  if (!vis(s, at)) return '';
+  var a = isNew(s, at);
+  if (a) attrs = /style="/.test(attrs) ? attrs.replace('style="', 'style="--d:' + d + 's;') : attrs + ' style="--d:' + d + 's"';
+  var open = '<' + tag + ' class="' + c + (a ? ' fd' : '') + '" ' + attrs;
+  return inner == null ? open + '/>' : open + '>' + inner + '</' + tag + '>';
+}
+function chev(cx, cy, r, deg, sz){
+  var a = deg * Math.PI / 180, tx = -Math.sin(a), ty = Math.cos(a), px = cx + r * Math.cos(a), py = cy + r * Math.sin(a), nx = -ty, ny = tx;
+  var bx = px - sz * tx, by = py - sz * ty, k = .7 * sz, f = function(n){ return n.toFixed(1); };
+  return 'M' + f(bx + k * nx) + ' ' + f(by + k * ny) + ' L' + f(px) + ' ' + f(py) + ' L' + f(bx - k * nx) + ' ' + f(by - k * ny);
+}
+var MID = 'text-anchor="middle"', BIG = 'style="font-size:20px;font-weight:700"';
+
+var SHOTS = [
+{ id:'loop', t:'Every habit is a loop', n:'Cue, craving, response, reward',
+  alt:'A circle with four steps: cue, craving, response and reward. A smaller circle inside is labelled easier.',
+  f:[
+    {h:'Every habit runs on a loop.', b:'Something sets you off, you feel a pull, you act, and you get a payoff. Your brain files the whole pattern away.'},
+    {h:'Cue. Craving. Response. Reward.', b:'The cue is the trigger. The craving is the pull. The response is what you actually do. The reward is what your brain remembers.'},
+    {h:'Each lap makes the next one easier.', b:'A reward tells your brain to do it again. To build a good habit, make the cue obvious and the response small.'}
+  ],
+  tryText:'Think of one thing you do on autopilot today. What set it off?',
+  svg:function(s){
+    var o = ln(s, 0, 0, 'sd', 'path', 'd="M160 38 A60 60 0 1 1 159.9 38"', 1.4);
+    [[160,38],[220,98],[160,158],[100,98]].forEach(function(p, i){ o += fx(s, 0, .3 + i * .3, 'fa', 'circle', 'cx="' + p[0] + '" cy="' + p[1] + '" r="7"'); });
+    [315, 45, 135, 225].forEach(function(a, i){ o += ln(s, 0, 1.1 + i * .12, 'sd', 'path', 'd="' + chev(160, 98, 60, a, 9) + '"', .3); });
+    o += fx(s, 1, 0, 'ff', 'text', 'x="160" y="24" ' + MID, 'Cue');
+    o += fx(s, 1, .2, 'ff', 'text', 'x="234" y="103"', 'Craving');
+    o += fx(s, 1, .4, 'ff', 'text', 'x="160" y="184" ' + MID, 'Response');
+    o += fx(s, 1, .6, 'ff', 'text', 'x="86" y="103" text-anchor="end"', 'Reward');
+    o += ln(s, 2, 0, 'sa w4', 'path', 'd="M100 98 A60 60 0 0 1 160 38"', .8);
+    o += ln(s, 2, .7, 'sa', 'circle', 'cx="160" cy="98" r="30"', 1);
+    o += fx(s, 2, 1.4, 'fa', 'text', 'x="160" y="103" ' + MID, 'easier');
+    return o;
+  }},
+
+{ id:'hook', t:'Hook it to a moment', n:'Why “after I…” beats “I’ll try to…”',
+  alt:'A loose wavy line labelled I’ll read more, then a straight thread with a knot at pour coffee and a second knot for read two pages.',
+  f:[
+    {h:'A wish has nowhere to happen.', b:'“I’ll read more” leaves the when and the where to your mood, and your mood is unreliable.'},
+    {h:'A plan has a moment.', b:'“After I pour my coffee” is something that already happens. It fires without you having to remember it.'},
+    {h:'Attach the habit to it.', b:'“After I pour my coffee, I read two pages.” A review of 94 studies found plans in this form make follow-through clearly more likely.'}
+  ],
+  tryText:'Pick one thing you do every single day. That is your moment.',
+  tryAct:{l:'Make a plan', a:'start'},
+  svg:function(s){
+    var o = ln(s, [0,0], 0, 'sd', 'path', 'd="M30 78 C70 30 100 120 145 74 S235 34 290 78"', 1.3);
+    o += fx(s, [0,0], 1.1, 'ff', 'text', 'x="160" y="140" ' + MID + ' ' + BIG, 'I’ll read more.');
+    o += fx(s, [0,0], 1.5, 'fm', 'text', 'x="160" y="168" ' + MID, 'When? Where?');
+    o += ln(s, [1,2], 0, 'sd', 'path', 'd="M30 110 L290 110"', .7);
+    o += fx(s, [1,2], .5, 'fa', 'circle', 'cx="100" cy="110" r="8"');
+    o += fx(s, [1,2], .7, 'ff', 'text', 'x="100" y="86" ' + MID, 'After I pour my coffee,');
+    o += ln(s, 2, 0, 'sa w4', 'path', 'd="M108 110 L207 110"', .7);
+    o += fx(s, 2, .6, 'fa', 'circle', 'cx="215" cy="110" r="8"');
+    o += fx(s, 2, .8, 'ff', 'text', 'x="215" y="146" ' + MID + ' style="font-weight:700"', 'I read two pages.');
+    return o;
+  }},
+
+{ id:'alarm', t:'Why alarms fade', n:'The clock isn’t your life',
+  alt:'A ringing clock, then three days where a fixed alarm tick misses the real moments, then the habit hooked to each real moment.',
+  f:[
+    {h:'An alarm runs on the clock.', b:'It goes off at 9:00 whether you are ready or not, and it asks you to remember a habit you have not made automatic yet.'},
+    {h:'Your day doesn’t.', b:'Some days coffee is at 7, some days at 9. A fixed alarm keeps landing next to the real moment, not on it.'},
+    {h:'A moment never goes silent.', b:'Research on habit apps suggests people who lean on reminders find it harder to make the habit automatic. Hooking to what already happens skips that.'}
+  ],
+  tryText:'Turn off one reminder that you swat away every day, and hook the habit to a moment instead.',
+  svg:function(s){
+    var o = ln(s, [0,0], 0, 'sf', 'circle', 'cx="160" cy="88" r="44"', 1);
+    o += ln(s, [0,0], .8, 'sf', 'path', 'd="M160 88 L160 60 M160 88 L180 98"', .5);
+    [[112,46,100,34],[208,46,220,34],[104,74,90,70],[216,74,230,70],[104,98,90,102],[216,98,230,102]].forEach(function(p, i){
+      o += ln(s, [0,0], 1.1 + i * .08, 'sx', 'path', 'd="M' + p[0] + ' ' + p[1] + ' L' + p[2] + ' ' + p[3] + '"', .25);
+    });
+    o += fx(s, [0,0], 1.6, 'fm', 'text', 'x="160" y="170" ' + MID, 'Every day at 9:00');
+    var rows = [[60,'Mon',120],[100,'Wed',215],[140,'Fri',150]];
+    rows.forEach(function(r, i){
+      o += ln(s, [1,2], i * .15, 'sd', 'path', 'd="M70 ' + r[0] + ' L290 ' + r[0] + '"', .6);
+      o += fx(s, [1,2], i * .15, 'fm', 'text', 'x="30" y="' + (r[0] + 5) + '" style="font-size:14px"', r[1]);
+      o += ln(s, [1,1], .8 + i * .1, 'sx w4', 'path', 'd="M170 ' + (r[0] - 12) + ' L170 ' + (r[0] + 12) + '"', .3);
+      o += fx(s, [1,2], 1 + i * .15, 'fa', 'circle', 'cx="' + r[2] + '" cy="' + r[0] + '" r="7"');
+      o += ln(s, 2, .3 + i * .15, 'sa', 'path', 'd="M' + (r[2] - 12) + ' ' + (r[0] - 12) + ' Q' + r[2] + ' ' + (r[0] - 26) + ' ' + (r[2] + 12) + ' ' + (r[0] - 12) + '"', .5);
+    });
+    o += fx(s, [1,1], 1.6, 'fx', 'text', 'x="170" y="184" ' + MID, 'same alarm, missed moment');
+    o += fx(s, 2, 1, 'fa', 'text', 'x="170" y="184" ' + MID, 'the habit follows the moment');
+    return o;
+  }},
+
+{ id:'curve', t:'It’s not 21 days', n:'How long habits really take',
+  alt:'A rising curve that levels off around day 66, with a bar showing the range from 18 to 254 days.',
+  f:[
+    {h:'Habits grow. They don’t switch on.', b:'The more you repeat something in the same setting, the more automatic it feels. The gain is fast at first, then slows.'},
+    {h:'About 66 days, on average.', b:'In a study that followed 96 people, the typical time for a new habit to feel automatic was 66 days. The 21-day figure is a myth.'},
+    {h:'Anywhere from 18 to 254.', b:'Simple habits landed sooner, harder ones took longer. Your number is yours, so the bar on Today is a guide, never a deadline.'}
+  ],
+  tryText:'Give your first habit at least ten weeks before you decide whether it works.',
+  svg:function(s){
+    var o = ln(s, [0,2], 0, 'sd', 'path', 'd="M40 20 L40 160 L292 160"', .7);
+    o += fx(s, [0,2], .6, 'fm', 'text', 'x="48" y="26" style="font-size:14px"', 'automatic');
+    o += fx(s, [0,2], .6, 'fm', 'text', 'x="292" y="150" text-anchor="end" style="font-size:14px"', 'days');
+    o += ln(s, 0, .6, 'sa w4', 'path', 'd="M40 160 C58 150 82 92 103 74 C130 54 200 48 290 44"', 1.8);
+    o += ln(s, [1,2], 0, 'sd', 'path', 'd="M103 160 L103 74"', .6);
+    o += fx(s, [1,2], .5, 'fa', 'circle', 'cx="103" cy="74" r="7"');
+    o += fx(s, [1,2], .7, 'ff', 'text', 'x="112" y="140" ' + BIG, '66 days');
+    o += ln(s, 2, 0, 'sf', 'path', 'd="M57 192 L284 192 M57 185 L57 199 M284 185 L284 199"', 1.1);
+    o += fx(s, 2, .9, 'fm', 'text', 'x="57" y="178" ' + MID, '18');
+    o += fx(s, 2, 1.1, 'fm', 'text', 'x="284" y="178" ' + MID, '254');
+    return o;
+  }},
+
+{ id:'miss', t:'One miss changes almost nothing', n:'And why the second one matters',
+  alt:'A row of fourteen dots with one hollow, then two hollow in a row, then the second one filled with a small dot.',
+  f:[
+    {h:'Missing once barely matters.', b:'In the same study, a single missed day made no meaningful difference to how the habit formed. One gap is not failure.'},
+    {h:'The second miss is the risk.', b:'One skipped day is an accident. Two in a row starts to be a new pattern. That is a rule of thumb, not a law, but it works.'},
+    {h:'So the app shrinks tomorrow.', b:'After a slip, you get the small version instead of a scolding. “Never miss twice” becomes easy to keep.'}
+  ],
+  tryText:'Decide now what your small version is for a bad day. Then it is not a decision later.',
+  svg:function(s){
+    var o = '', xs = function(i){ return (33 + i * 20.7).toFixed(1); }, i;
+    var miss = s === 0 ? [6] : [6, 7];
+    for (i = 0; i < 14; i++) {
+      var m = miss.indexOf(i) >= 0, d = i * .07;
+      if (!m) o += fx(s, s, d, 'fa', 'circle', 'cx="' + xs(i) + '" cy="96" r="7"');
+      else if (s === 2 && i === 7) { o += fx(s, s, d, 'l sa', 'circle', 'cx="' + xs(i) + '" cy="96" r="7"') + fx(s, s, d + .5, 'fa', 'circle', 'cx="' + xs(i) + '" cy="96" r="3.5"'); }
+      else o += fx(s, s, d, 'l sd', 'circle', 'cx="' + xs(i) + '" cy="96" r="7"');
+    }
+    o += fx(s, [0,0], 1.1, 'ff', 'text', 'x="160" y="52" ' + MID + ' ' + BIG, '13 of 14 days');
+    o += fx(s, [0,0], 1.3, 'fm', 'text', 'x="' + xs(6) + '" y="136" ' + MID, 'one miss');
+    o += ln(s, [1,1], 1.1, 'sx', 'path', 'd="M' + (xs(6) - 8) + ' 118 L' + (xs(6) - 8) + ' 126 L' + (+xs(7) + 8) + ' 126 L' + (+xs(7) + 8) + ' 118"', .5);
+    o += fx(s, [1,1], 1.5, 'fx', 'text', 'x="' + ((+xs(6) + +xs(7)) / 2).toFixed(1) + '" y="150" ' + MID, 'two in a row');
+    o += fx(s, [2,2], 1, 'fa', 'text', 'x="' + xs(7) + '" y="134" ' + MID, 'small version');
+    return o;
+  }},
+
+{ id:'tiny', t:'Make it smaller, not harder', n:'Motivation comes and goes',
+  alt:'A wavy motivation line. A big-habit line sits above most of it and is only reached at two peaks. A tiny-habit line sits below the lowest point, with a dot for every day.',
+  f:[
+    {h:'Motivation comes and goes.', b:'Some days you feel like it. Most days you feel like something else. Any plan that needs a good mood will fail on ordinary days.'},
+    {h:'A big habit needs a peak.', b:'Thirty minutes of reading only happens on the best days. The habit runs on your best moods, so it stops when they do.'},
+    {h:'A tiny one fits any day.', b:'One paragraph is below even your lowest point. Doing it counts, and once you start you often carry on. Size is the lever you control.'}
+  ],
+  tryText:'Cut your habit until it feels almost silly. That is the right size for a bad day.',
+  svg:function(s){
+    var o = ln(s, [0,2], 0, 'sf', 'path', 'd="M30 100 C50 20 100 20 120 100 S190 180 210 100 S270 20 290 60"', 1.8);
+    o += fx(s, [0,2], 1.2, 'fm', 'text', 'x="30" y="140" style="font-size:14px"', 'motivation');
+    o += ln(s, [1,2], 0, 'sd', 'path', 'd="M30 55 L290 55"', .7);
+    o += fx(s, [1,2], .5, 'fm', 'text', 'x="165" y="46" ' + MID + ' style="font-size:14px"', 'big habit');
+    o += fx(s, [1,2], .9, 'fa', 'circle', 'cx="75" cy="40" r="6"');
+    o += fx(s, [1,2], 1.1, 'fa', 'circle', 'cx="250" cy="35" r="6"');
+    o += ln(s, 2, 0, 'sa', 'path', 'd="M30 178 L290 178"', .7);
+    for (var i = 0; i < 11; i++) o += fx(s, 2, .5 + i * .08, 'fa', 'circle', 'cx="' + (45 + i * 23) + '" cy="178" r="4.5"');
+    o += fx(s, 2, 1.4, 'fa', 'text', 'x="160" y="202" ' + MID + ' style="font-weight:700"', 'tiny habit, every day');
+    return o;
+  }},
+
+{ id:'streak', t:'Why streaks backfire', n:'The cliff and the tally',
+  alt:'A streak line climbs then falls to zero. A separate total line keeps rising, with only a flat stretch during the slip.',
+  f:[
+    {h:'A streak is one fragile number.', b:'Day after day it climbs, and the higher it gets, the more it feels like something you can lose.'},
+    {h:'Miss once and it says: start over.', b:'Researchers call the “what the hell” effect: one slip, and people feel they have already blown it, so they stop.'},
+    {h:'A tally only goes up.', b:'A slip is a flat stretch, not a reset. That is why Then counts what you have done in total, and never resets anything.'}
+  ],
+  tryText:'Look at any habit app that shows a big streak. How would you feel if it went to zero tomorrow?',
+  svg:function(s){
+    var o = ln(s, [0,2], 0, 'sd', 'path', 'd="M40 20 L40 170 L292 170"', .7);
+    o += ln(s, [0,2], .6, 'sf', 'path', 'd="M40 170 L150 62"', 1);
+    o += fx(s, [0,2], 1.4, 'fm', 'text', 'x="156" y="56" style="font-size:14px"', 'streak');
+    o += ln(s, [1,2], 0, 'sx w4', 'path', 'd="M150 62 L153 170"', .5);
+    o += fx(s, [1,2], .5, 'fx', 'text', 'x="162" y="158" ' + BIG, 'back to 0');
+    o += ln(s, [1,2], .7, 'sf', 'path', 'd="M153 170 L215 118"', .6);
+    o += ln(s, 2, 0, 'sa w4', 'path', 'd="M40 170 L150 110 L200 110 L292 44"', 1.4);
+    o += fx(s, 2, 1.2, 'fa', 'text', 'x="284" y="32" text-anchor="end" style="font-weight:700"', 'total done');
+    return o;
+  }},
+
+{ id:'identity', t:'Every rep is a vote', n:'Who you’re becoming',
+  alt:'Two groups of five tally marks, the words I’m becoming a reader, and a bar filled a little past halfway.',
+  f:[
+    {h:'Every rep is a vote.', b:'Each time you do the thing, you cast a small vote for the kind of person who does it.'},
+    {h:'For who you’re becoming.', b:'“I’m becoming a reader” is more durable than “I want to read”. The label follows the pattern. It doesn’t come first.'},
+    {h:'You don’t need a landslide.', b:'You only need more votes than not. That is why a slip does not undo who you are, and why Then asks you to pick an identity, not a goal.'}
+  ],
+  tryText:'Finish the sentence: “I’m becoming someone who…” Then do one tiny thing that fits it today.',
+  svg:function(s){
+    var o = '';
+    [76, 196].forEach(function(x0, g){
+      for (var k = 0; k < 4; k++) o += ln(s, [0,2], g * .9 + k * .18, 'sf', 'path', 'd="M' + (x0 + k * 12) + ' 44 L' + (x0 + k * 12) + ' 104"', .3);
+      o += ln(s, [0,2], g * .9 + .8, 'sa w4', 'path', 'd="M' + (x0 - 8) + ' 96 L' + (x0 + 44) + ' 60"', .4);
+    });
+    o += fx(s, [1,2], .3, 'ff', 'text', 'x="160" y="146" ' + MID + ' ' + BIG, 'I’m becoming a reader.');
+    o += ln(s, 2, 0, 'sd w6', 'path', 'd="M40 190 L280 190"', .6);
+    o += ln(s, 2, .5, 'sa w6', 'path', 'd="M40 190 L196 190"', .8);
+    o += ln(s, 2, 1.1, 'sf', 'path', 'd="M160 180 L160 200"', .3);
+    o += fx(s, 2, 1.3, 'fm', 'text', 'x="160" y="172" ' + MID + ' style="font-size:14px"', 'more votes than not');
+    return o;
+  }},
+
+{ id:'swap', t:'Swap, don’t suppress', n:'Why the app never blocks anything',
+  alt:'An arrow from a boredom cue to scrolling, blocked by a red bar, then a second accent arrow from the same cue to reading a page.',
+  f:[
+    {h:'A cue leads to a response.', b:'Boredom shows up, and your thumb heads for the feed. The cue and the pull are real. They are not a character flaw.'},
+    {h:'Blocking it doesn’t erase it.', b:'Telling yourself not to think about something tends to make it louder. The urge is still there, with nowhere to go.'},
+    {h:'Keep the cue. Swap the response.', b:'Reroute the same cue to something better. That is why the free-minutes button offers things to do instead of locking anything.'}
+  ],
+  tryText:'Next time you reach for the feed out of boredom, do one thing from your own short list first.',
+  tryAct:{l:'Open free minutes', a:'free'},
+  svg:function(s){
+    var o = fx(s, [0,2], 0, 'fa', 'circle', 'cx="55" cy="105" r="9"');
+    o += fx(s, [0,2], .2, 'fm', 'text', 'x="55" y="136" ' + MID, 'boredom');
+    o += ln(s, [0,2], .3, 'sf', 'path', 'd="M68 100 C120 100 160 60 215 58"', 1);
+    o += ln(s, [0,2], 1.2, 'sf', 'path', 'd="M206 52 L216 58 L207 65"', .3);
+    o += fx(s, [0,2], 1.4, 'ff', 'text', 'x="224" y="63"', 'scroll');
+    o += ln(s, [1,2], 0, 'sx w6', 'path', 'd="M140 62 L140 98"', .4);
+    o += fx(s, [1,1], .7, 'fx', 'text', 'x="160" y="192" ' + MID, 'the urge is still there');
+    o += ln(s, 2, 0, 'sa w4', 'path', 'd="M68 110 C120 110 160 150 190 150"', 1);
+    o += ln(s, 2, .9, 'sa w4', 'path', 'd="M181 143 L191 150 L182 157"', .3);
+    o += fx(s, 2, 1.1, 'fa', 'text', 'x="198" y="155" style="font-weight:700"', 'read a page');
+    o += fx(s, 2, 1.4, 'fm', 'text', 'x="160" y="192" ' + MID, 'same cue, new response');
+    return o;
+  }}
+];
+function shotById(id){ for (var i = 0; i < SHOTS.length; i++) if (SHOTS[i].id === id) return SHOTS[i]; return null; }
+function shotDone(id){ return !!(S.shotsRead && S.shotsRead[id]); }
+function shotsSeen(){ return SHOTS.filter(function(x){ return shotDone(x.id); }).length; }
+function nextShot(){ var r = recShots(); for (var j = 0; j < r.length; j++) if (!shotDone(r[j])) return shotById(r[j]); for (var i = 0; i < SHOTS.length; i++) if (!shotDone(SHOTS[i].id)) return SHOTS[i]; return null; }
+
+
+/* ---------- brand: logo and Tally the mascot ---------- */
+var INK = '#1B1713';
+function logoMark(size, draw){
+  var d = draw ? ' dr' : '';
+  return '<svg class="logo" width="' + size + '" height="' + size + '" viewBox="0 0 96 96" role="img" aria-label="Then">' +
+    '<rect width="96" height="96" rx="22" fill="#141311"/>' +
+    '<path class="lg' + d + '" pathLength="1" style="--d:.5s;--t:.7s" d="M32 41 C32 62 38 66 46 66" fill="none" stroke="#F29E4C" stroke-width="7" stroke-linecap="round"/>' +
+    '<circle class="lg' + d + '" pathLength="1" style="--d:0s;--t:.6s" cx="32" cy="30" r="10.5" fill="none" stroke="#F29E4C" stroke-width="7"/>' +
+    '<circle class="' + (draw ? 'fd' : '') + '" style="--d:1.1s" cx="62" cy="66" r="18" fill="#F29E4C"/>' +
+    '<path class="lg' + d + '" pathLength="1" style="--d:1.3s;--t:.4s" d="M53.5 66.5 L59.5 72.5 L70.5 59.5" fill="none" stroke="#141311" stroke-width="4.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+}
+function sparkle(x, y, d){ return '<path class="spark" style="--d:' + d + 's" d="M' + (x - 5) + ' ' + y + ' L' + (x + 5) + ' ' + y + ' M' + x + ' ' + (y - 5) + ' L' + x + ' ' + (y + 5) + '"/>'; }
+/* mood: idle | happy | cheer | wave | think | sleep */
+function buddy(mood, size, pop){
+  var happy = mood === 'happy' || mood === 'cheer', o = '';
+  var arms = mood === 'cheer'
+    ? '<path class="arm" d="M15 76 C4 72 2 58 8 48"/><path class="arm" d="M105 76 C116 72 118 58 112 48"/>'
+    : mood === 'wave'
+      ? '<path class="arm" d="M15 82 C9 86 9 92 14 94"/><path class="arm arm-wave" d="M105 76 C116 72 118 58 112 48"/>'
+      : '<path class="arm" d="M15 82 C9 86 9 92 14 94"/><path class="arm" d="M105 82 C111 86 111 92 106 94"/>';
+  var eyes = happy ? '<path d="M34 66 Q44 54 54 66 M66 66 Q76 54 86 66" fill="none" stroke="' + INK + '" stroke-width="4" stroke-linecap="round"/>'
+    : mood === 'sleep' ? '<path d="M34 63 Q44 71 54 63 M66 63 Q76 71 86 63" fill="none" stroke="' + INK + '" stroke-width="4" stroke-linecap="round"/>'
+    : '<g class="tl-eyes"><circle cx="44" cy="64" r="11" fill="#fff"/><circle cx="76" cy="64" r="11" fill="#fff"/><g class="pup"><circle cx="44" cy="64" r="5.6" fill="' + INK + '"/><circle cx="76" cy="64" r="5.6" fill="' + INK + '"/><circle cx="46" cy="62" r="1.7" fill="#fff"/><circle cx="78" cy="62" r="1.7" fill="#fff"/></g></g>';
+  var mouth = happy ? '<path d="M47 82 Q60 104 73 82 Z" fill="' + INK + '"/><path d="M53 93 Q60 87 67 93 Q60 100 53 93Z" fill="#E58A7A"/>'
+    : mood === 'think' ? '<ellipse cx="60" cy="89" rx="4" ry="5" fill="none" stroke="' + INK + '" stroke-width="3.5"/>'
+    : mood === 'sleep' ? '<path d="M55 88 Q60 91 65 88" fill="none" stroke="' + INK + '" stroke-width="3.5" stroke-linecap="round"/>'
+    : '<path d="M51 85 Q60 94 69 85" fill="none" stroke="' + INK + '" stroke-width="3.6" stroke-linecap="round"/>';
+  o += '<svg class="buddy' + (pop ? ' pop' : '') + '" width="' + size + '" height="' + Math.round(size * 1.25) + '" viewBox="0 0 120 150" aria-hidden="true"' + (mood === 'think' ? ' data-still="1" style="--px:3px;--py:-3px"' : '') + '><g class="tl-body">' +
+    '<path class="tl-tail' + (pop ? ' dr' : '') + '" pathLength="1" style="--d:.7s;--t:.9s" d="M60 110 C58 128 80 124 82 137"/><circle class="' + (pop ? 'fd' : '') + '" style="--d:1.5s" cx="82" cy="139" r="6" fill="var(--accent-deep)"/>' +
+    '<path class="tl-tail" d="M62 17 C60 4 75 2 71 13"/>' + arms +
+    '<path d="M60 14 C92 14 108 40 108 66 C108 96 88 112 60 112 C32 112 12 96 12 66 C12 40 28 14 60 14Z" fill="var(--accent)"/>' +
+    '<path d="M15 82 C22 104 42 112 60 112 C80 112 100 102 106 82 C98 98 80 104 60 104 C42 104 24 98 15 82Z" fill="var(--accent-deep)" opacity=".45"/>' +
+    '<ellipse cx="38" cy="36" rx="12" ry="7" transform="rotate(-30 38 36)" fill="#fff" opacity=".28"/>' +
+    '<circle cx="29" cy="80" r="5.5" fill="#E58A7A" opacity=".5"/><circle cx="91" cy="80" r="5.5" fill="#E58A7A" opacity=".5"/>' +
+    eyes + mouth + '</g>' + (mood === 'cheer' ? sparkle(14, 30, .1) + sparkle(106, 22, .4) + sparkle(60, 4, .7) + sparkle(116, 84, 1) : '') + '</svg>';
+  return o;
+}
+function tallyRow(mood, msg, size){
+  return '<div class="trow"><button type="button" class="tbtn" data-act="poke" data-mood="' + mood + '" data-size="' + size + '" aria-label="Tally, your habit buddy. Tap to say hi.">' + buddy(mood, size) + '</button><p class="bubble">' + esc(msg) + '</p></div>';
+}
+function hello(){
+  var h = new Date().getHours(), n = S.profile && S.profile.name;
+  return (h < 5 ? 'Still up' : h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening') + (n ? ', ' + n : '');
+}
+
+/* ---------- Tally's questions: understand the person before the habit ---------- */
+var QS = [
+  {k:'why', mood:'wave', say:function(n){ return 'Before we pick anything, six quick taps' + (n ? ', ' + n : '') + '. I’ll tailor everything to you.'; },
+   q:'What brings you here?', sub:'No wrong answers.',
+   o:[['build','Start something good','A habit I keep meaning to begin'],['swap','Do less of something','Like scrolling when I’m bored'],['back','Get back on track','Something I used to do'],['look','Just curious','Show me how it works']]},
+  {k:'energy', mood:'think', say:function(){ return 'Everyone has a rhythm. Habits stick better when they fit yours.'; },
+   q:'When do you feel most like yourself?',
+   o:[['am','Mornings'],['mid','Middle of the day'],['pm','Evenings'],['vary','It changes a lot']]},
+  {k:'days', mood:'think', say:function(){ return 'Routine matters more than willpower.'; },
+   q:'How alike are your days?',
+   o:[['same','Mostly the same','Same wake-up, same rhythm'],['some','Some routine','Weekdays yes, weekends less'],['chaos','All over the place','Shifts, travel, kids, surprises']]},
+  {k:'broke', mood:'idle', say:function(){ return 'Be honest. I won’t judge.'; },
+   q:'Last time a habit fell apart, what happened?',
+   o:[['forgot','I just forgot about it'],['big','It was too much'],['mood','I stopped feeling like it'],['miss','I missed a day and gave up'],['new','This is my first real try']]},
+  {k:'slip', mood:'think', say:function(){ return 'This one matters most.'; },
+   q:'When you miss a day, what does your head say?',
+   o:[['fine','“No big deal, carry on.”'],['bad','“See? I’m bad at this.”'],['reset','“I’ll start fresh on Monday.”']]},
+  {k:'style', mood:'happy', say:function(){ return 'Last one!'; },
+   q:'How should I show up?',
+   o:[['show','Show me my progress','Days, dots and the bigger picture'],['quiet','Keep it quiet','Just the next step, nothing else']]}
+];
+function quiz(){ return (S.profile && S.profile.quiz) || {}; }
+function quizCount(){ var q = quiz(); return QS.filter(function(x){ return q[x.k]; }).length; }
+function quiet(){ return quiz().style === 'quiet'; }
+function suggestedMoments(){
+  var q = quiz(), e = q.energy;
+  if (!e) return [];
+  var m = e === 'am' ? ['I wake up', 'I pour my coffee'] : e === 'mid' ? ['I finish lunch', 'I pour my coffee'] : e === 'pm' ? ['I get home', 'I brush my teeth'] : ['I wake up', 'I brush my teeth'];
+  if (q.days === 'chaos') { m = m.filter(function(x){ return ['I wake up', 'I brush my teeth', 'I pour my coffee'].indexOf(x) >= 0; }); if (!m.length) m = ['I brush my teeth']; }
+  return m;
+}
+function insights(){
+  var q = quiz(), out = [], sm = suggestedMoments();
+  if (q.energy) {
+    var w = q.days === 'chaos' ? 'Your days vary, so we’ll use a moment that happens no matter what.'
+      : q.energy === 'am' ? 'Mornings are your time, so we’ll build while the tank is full.'
+      : q.energy === 'pm' ? 'Evenings are your time, so we’ll hook onto the end of the day.'
+      : q.energy === 'mid' ? 'Midday is your time, so we’ll hook onto the middle of the day.'
+      : 'Your energy moves around, so we’ll use a moment that happens every day anyway.';
+    out.push({k:'Your moment', t:w + ' I’d start with “after ' + sm[0] + '”.'});
+  }
+  var B = {
+    forgot:['You said you forgot', 'Forgetting isn’t a willpower problem, it’s a missing cue. Your habit gets tied to a moment, so there’s nothing to remember.'],
+    big:['You said it was too much', 'We’ll start almost silly-small: under two minutes, with an even smaller version for hard days.'],
+    mood:['You said the feeling faded', 'Feelings come and go, so we’ll design for your worst day, not your best. Small enough to do tired.'],
+    miss:['You said one miss ended it', 'Here, nothing ever resets. After a miss, the next day just asks for the small version.'],
+    'new':['Your first real try', 'Good news: starting small is the whole trick. One habit to begin, and only one.']
+  }[q.broke];
+  if (B) out.push({k:B[0], t:B[1]});
+  var L = {
+    bad:['That inner voice', '“I’m bad at this” is really common, and it isn’t true. A slip is information, not a verdict. I’ll never show you a broken streak.'],
+    reset:['Waiting for Monday', 'Fresh starts feel good but waste the days in between. There are no Mondays here: tomorrow you just do the small version.'],
+    fine:['You shrug off misses', 'That’s exactly the attitude that keeps habits alive. Hold on to it.']
+  }[q.slip];
+  if (L) out.push({k:L[0], t:L[1]});
+  if (q.why === 'swap') out.push({k:'Doing less of something', t:'We won’t block anything. When boredom hits, tap “I have a few free minutes” and I’ll offer something better instead.'});
+  else if (q.style === 'quiet') out.push({k:'Quiet mode', t:'Your home screen will show just the next step. You can change that in Settings.'});
+  return out;
+}
+function recShots(){
+  var q = quiz(), r = [];
+  var add = function(id){ if (id && r.indexOf(id) < 0) r.push(id); };
+  add({forgot:'hook', big:'tiny', mood:'tiny', miss:'miss', 'new':'loop'}[q.broke]);
+  add({bad:'streak', reset:'miss', fine:'identity'}[q.slip]);
+  if (q.why === 'swap') add('swap');
+  if (q.days === 'chaos') add('alarm');
+  return r;
+}
+/* ---------- state ---------- */
+var CEL = null, ANIM = false, LASTTAB = 'today', ANS = null, V = 'today', P = {}, D = {}, F = {mins:10}, TM = null, OPTS = [], FULL = {}, CONF = {}, EDIT = false, lastUndo = null, toastT = null;
+
+function homeView(){ return S.seen ? 'today' : 'intro'; }
+var TABNAME = {today:'Today', shots:'Shots', list:'Habits'};
+
+function go(view, params, focus){
+  if (V === 'doing' && view !== 'doing') stopTimer();
+  var tt = $('#toast'); if (tt) tt.hidden = true;
+  V = view === 'home' ? homeView() : view; P = params || {}; CONF = {}; ANIM = true; if (TABS[V]) LASTTAB = V; if (V !== 'habit') EDIT = false;
+  render(focus !== false);
+  if (focus !== false) window.scrollTo(0, 0);
+}
+
+function toast(msg, undo){
+  var el = $('#toast');
+  lastUndo = undo || null;
+  el.innerHTML = '<span>' + esc(msg) + '</span>' + (undo ? '<button type="button" data-act="undo">Undo</button>' : '');
+  el.hidden = false;
+  clearTimeout(toastT);
+  toastT = setTimeout(function(){ el.hidden = true; lastUndo = null; }, undo ? 6000 : 3200);
+}
+
+/* ---------- components ---------- */
+function cta(label, act, attrs, cls){
+  return '<button type="button" class="cta ' + (cls || '') + '" data-act="' + act + '" ' + (attrs || '') + '><span>' + label + '</span><span class="dot">' + I.arrow + '</span></button>';
+}
+function bigBtn(label, act, attrs){ return '<button type="button" class="cta plain" data-act="' + act + '" ' + (attrs || '') + '>' + label + '</button>'; }
+function back(to, label, i){ return '<button type="button" class="back" data-act="go" data-to="' + to + '"' + (i != null ? ' data-i="' + i + '"' : '') + '>' + I.left + esc(label) + '</button>'; }
+function steps(n, backTo, backI){
+  var bars = ''; for (var i = 1; i <= 3; i++) bars += '<span class="' + (i <= n ? 'on' : '') + '"></span>';
+  return '<div class="topbar">' + back(backTo, 'Back', backI) + '<span class="small muted">' + (D.obFrom ? 'Your first habit · ' : 'Step ') + n + ' of 3</span></div><div class="bars" aria-hidden="true">' + bars + '</div>';
+}
+function radioRow(label, note, pressed, act, attrs){
+  return '<button type="button" class="rowbtn" aria-pressed="' + (pressed ? 'true' : 'false') + '" data-act="' + act + '" ' + attrs + '><span class="t"><span>' + esc(label) + '</span>' + (note ? '<span class="n">' + esc(note) + '</span>' : '') + '</span><span class="radio">' + I.checkS + '</span></button>';
+}
+function node(h, opts){
+  var d = !!h.log[todayStr()];
+  var showSmall = slipped(h);
+  var txt = showSmall ? h.small : h.action;
+  var lab = (d ? 'Mark not done: ' : 'Mark done: ') + txt;
+  return '<div class="node ' + (d ? 'is-done' : '') + '"><span class="knot"></span><div class="txt"><span class="cue">' + esc(cue(h)) + (showSmall && !d ? ' · small version today' : '') + '</span><span class="act">' + esc(cap(txt)) + '</span></div>' +
+    '<button type="button" class="check" data-act="toggle" data-id="' + h.id + '" aria-pressed="' + (d ? 'true' : 'false') + '" aria-label="' + esc(lab) + '">' + I.check + '</button></div>';
+}
+
+/* ---------- views ---------- */
+var views = {};
+
+views.intro = function(){
+  var i = P.i || 0, nm = S.profile && S.profile.name ? S.profile.name : '';
+  var dots = '<div class="bars" aria-hidden="true">' + [0, 1, 2, 3].map(function(k){ return '<span class="' + (k <= i ? 'on' : '') + '"></span>'; }).join('') + '</div>';
+  var lbl = ['', 'The idea', 'About you', 'Your first habit'][i];
+  var bk = i === 3 ? (quizCount() === QS.length ? back('learned', 'Back') : back('intro', 'Back', 2)) : back('intro', 'Back', i - 1);
+  var top = i === 0 ? '' : '<div class="topbar">' + bk + '<span class="small muted">' + lbl + '</span></div>' + dots;
+  if (i === 0) {
+    return '<div class="ob0"><div class="rise" style="--i:0">' + logoMark(72, true) + '</div><div class="wm rise" style="--i:1">then<i>.</i></div></div>' +
+      '<div class="ob-t rise" style="--i:2">' + buddy('wave', 150, true) + '</div>' +
+      '<h1 class="h1 sm center rise" id="h" tabindex="-1" style="--i:3">Hi, I’m Tally.<br><span class="dim">I help good habits stick.</span></h1>' +
+      '<div class="spacer"></div><div class="stack rise" style="--i:4">' + cta('Nice to meet you', 'go', 'data-to="intro" data-i="1"') +
+      '<button type="button" class="link" data-act="examples">Just look around with example habits</button></div>';
+  }
+  if (i === 1) {
+    return top + '<div class="trow rise" style="--i:0"><span class="tbtn" style="cursor:default">' + buddy('idle', 76) + '</span><p class="bubble">Here’s my one trick.</p></div>' +
+      '<h1 class="h1 sm rise" id="h" tabindex="-1" style="--i:1">A habit needs a moment,<br><span class="dim">not a reminder.</span></h1>' +
+      '<div class="thread reveal" style="display:flex;flex-direction:column;gap:14px">' +
+        [['After I pour my coffee', 'read two pages'], ['When I get home', 'walk for ten minutes']].map(function(r, k){
+          return '<div class="node ' + (k === 0 ? 'is-done' : '') + ' rise" style="padding-block:2px;--i:' + (3 + k * 2) + '"><span class="knot" style="top:10px;margin-top:0"></span><div class="txt"><span class="cue">' + esc(r[0]) + '</span><span class="act" style="text-decoration:none;color:var(--fg)">' + esc(r[1]) + '</span></div></div>';
+        }).join('') + '</div>' +
+      '<div class="pills rise" style="--i:7">' + ['No alarms', 'No streaks', 'Nothing resets'].map(function(t){ return '<span class="pill">' + I.checkS + t + '</span>'; }).join('') + '</div>' +
+      '<div class="spacer"></div><div class="rise" style="--i:8">' + cta('Makes sense', 'go', 'data-to="intro" data-i="2"') + '</div>';
+  }
+  if (i === 2) {
+    return top + '<div class="trow rise" style="--i:0"><span class="tbtn" style="cursor:default">' + buddy('think', 76) + '</span><p class="bubble">What should I call you?</p></div>' +
+      '<h1 class="h1 sm rise" id="h" tabindex="-1" style="--i:1">Let’s set up<br><span class="dim">your space.</span></h1>' +
+      '<div class="field rise" style="--i:2"><label class="big" for="pname">Your first name</label><input id="pname" type="text" data-in="pname" value="' + esc(D.pname || '') + '" placeholder="Type your name" autocomplete="given-name" maxlength="30" enterkeyhint="done"></div>' +
+      '<div class="card lock rise" style="--i:3;flex-direction:row">' + I.lock + '<p class="small muted" style="font-size:15px;line-height:1.5"><span class="hl" style="font-weight:500">Your profile lives on this device.</span> No email, no password, nothing sent anywhere. You can back it up any time.</p></div>' +
+      '<div class="spacer"></div><div class="stack rise" style="--i:4">' + cta('Create my space', 'obName') + '<button type="button" class="link" data-act="obSkip">Skip for now</button></div>';
+  }
+  var cur = D.obI == null ? 0 : D.obI;
+  return top + '<div class="trow rise" style="--i:0"><span class="tbtn" style="cursor:default">' + buddy('happy', 76) + '</span><p class="bubble">' + (nm ? 'Lovely to meet you, ' + esc(nm) + '!' : 'Lovely to meet you!') + '</p></div>' +
+    '<div class="stack rise" style="gap:8px;--i:1"><h1 class="h1 sm" id="h" tabindex="-1">Who are you<br><span class="dim">becoming?</span></h1><p class="muted">Pick one. I’ll suggest a tiny first habit for it.</p></div>' +
+    '<div class="rows rise" style="--i:2">' + ACTIONS.map(function(a, k){ return radioRow(cap(a.who), cap(a.a), cur === k, 'obPick', 'data-i="' + k + '"'); }).join('') + '</div>' +
+    '<div class="spacer"></div><div class="stickycta rise" style="--i:3">' + cta('Build my first habit', 'obGo') + '</div>';
+};
+
+views.moment = function(){
+  var sel = D.custom && D.custom.trim() ? null : D.moment;
+  return steps(1, D.obFrom ? 'intro' : 'home', D.obFrom ? 3 : undefined) +
+  '<div class="stack" style="gap:8px"><h1 class="h1 sm" id="h" tabindex="-1">What do you already do every day?</h1><p class="muted">Pick one. That moment becomes the reminder, so you won\'t need an alarm.</p></div>' +
+  '<div class="rows">' + (function(){ var sg = suggestedMoments(), ord = sg.concat(MOMENTS.filter(function(m){ return sg.indexOf(m) < 0; }));
+    return ord.map(function(m){ return radioRow(m, sg.indexOf(m) >= 0 ? 'Suggested for you' : '', sel === m, 'pickMoment', 'data-v="' + esc(m) + '"'); }).join(''); })() + '</div>' +
+  '<div class="field"><label for="own-moment">Or something else you always do</label><input id="own-moment" type="text" data-in="custom" value="' + esc(D.custom || '') + '" placeholder="I close my laptop" autocomplete="off"></div>' +
+  '<div class="spacer"></div>' + cta('Next', 'toAction');
+};
+
+views.action = function(){
+  var sel = D.customAction && D.customAction.trim() ? null : D.action;
+  return steps(2, 'moment') +
+  '<div class="stack" style="gap:8px"><p style="font-size:19px" class="muted">After ' + esc(D.momentFinal) + ',</p><h1 class="h1 sm" id="h" tabindex="-1">what\'s the tiny thing?</h1><p class="muted">Under two minutes. Small enough that skipping it feels silly.</p></div>' +
+  '<div class="rows">' + ACTIONS.map(function(a){ return radioRow(cap(a.a), a.m > 2 ? 'About ' + a.m + ' minutes' : (a.m === 1 ? 'About 1 minute' : 'About 2 minutes'), sel === a.a, 'pickAction', 'data-v="' + esc(a.a) + '"'); }).join('') + '</div>' +
+  '<div class="field"><label for="own-action">Or write your own</label><input id="own-action" type="text" data-in="customAction" value="' + esc(D.customAction || '') + '" placeholder="do five squats" autocomplete="off"></div>' +
+  '<div class="spacer"></div>' + cta('Next', 'toReview');
+};
+
+views.review = function(){
+  return steps(3, 'action') +
+  '<h1 class="h1" id="h" tabindex="-1"><span class="dim">After ' + esc(D.momentFinal) + ',</span><br>I\'ll ' + esc(D.actionFinal) + '.</h1>' +
+  '<div class="field"><label class="big" for="small">On a hard day, at least…</label><input id="small" type="text" data-in="small" value="' + esc(D.small) + '" autocomplete="off"><span class="small muted">Slipping is normal. This is the smaller version you do on those days.</span></div>' +
+  '<div class="field"><label class="big" for="who">I\'m becoming… <span class="muted" style="font-weight:400">(optional)</span></label><input id="who" type="text" data-in="who" value="' + esc(D.who) + '" placeholder="a reader" autocomplete="off"></div>' +
+  '<div class="card row"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--accent-text)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink:0;margin-top:1px"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 8 3 8H3s3-1 3-8"/><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0"/><path d="M3 3l18 18"/></svg><p class="small muted" style="font-size:15px;line-height:1.5"><span class="hl" style="font-weight:500">No alarm is set.</span> The moment you picked is the reminder. You\'ll see this plan on Today.</p></div>' +
+  '<div class="spacer"></div>' +
+  '<div class="stack">' + '<button type="button" class="cta" data-act="save"><span>Start this habit</span><span class="dot">' + I.check + '</span></button>' + '<button type="button" class="link" data-act="go" data-to="moment">Change the moment or action</button></div>';
+};
+
+var TABS = {today:'today', shots:'shots', list:'list'};
+function tabbar(v){
+  var items = [['today', 'Today', I.tToday], ['shots', 'Shots', I.tShots], ['list', 'Habits', I.tHabits]];
+  return '<nav class="tabs" aria-label="Main"><div>' + items.map(function(t){
+    return '<button type="button" class="tab" data-act="go" data-to="' + t[0] + '"' + (t[0] === v ? ' aria-current="page"' : '') + '>' + t[2] + '<span>' + t[1] + '</span></button>';
+  }).join('') + '</div></nav>';
+}
+function head(){
+  return '<header class="hd rise" style="--i:0">' + logoMark(34) + '<div class="who"><b>' + esc(hello()) + '</b><span>' + esc(new Date().toLocaleDateString(undefined, {weekday:'long', day:'numeric', month:'long'})) + '</span></div><button type="button" class="iconbtn" data-act="go" data-to="settings" aria-label="Settings and backup">' + I.gear + '</button></header>';
+}
+function weekStrip(h){
+  var t = todayStr(), cells = '', n = 0, k;
+  for (k = 6; k >= 0; k--) {
+    var d = addDays(t, -k), v = h.log[d], p = d.split('-').map(Number);
+    if (v) n++;
+    cells += '<span class="wk"><i class="wd ' + (v === 'full' ? 'f' : v === 'small' ? 's' : '') + (k === 0 ? ' t' : '') + (d < h.created ? ' pre' : '') + '"></i><b aria-hidden="true">' + esc(new Date(p[0], p[1] - 1, p[2]).toLocaleDateString(undefined, {weekday:'narrow'})) + '</b></span>';
+  }
+  return '<section class="stack rise" style="gap:10px;--i:4"><h2 class="sec">This week · ' + n + (n === 1 ? ' vote' : ' votes') + '</h2><div class="week" role="img" aria-label="' + n + ' of the last 7 days done">' + cells + '</div></section>';
+}
+function goalBar(h){
+  var a = age(h), pct = Math.min(100, Math.round(a / 66 * 100));
+  return '<section class="goal rise" style="--i:5"><div class="gb" role="progressbar" aria-valuemin="0" aria-valuemax="66" aria-valuenow="' + Math.min(a, 66) + '" aria-label="Days toward the typical 66"><i style="width:' + pct + '%"></i></div><p class="small muted"><span class="hl" style="font-weight:500">' + esc(cap(h.who || h.action)) + ' · day ' + a + '.</span> Most people feel a habit turn automatic somewhere around day 66. Your pace is your own.</p></section>';
+}
+var LINES = ['Tie it to the moment, not the clock.', 'A tiny version is still a vote.', 'You don’t need motivation. You need the moment.', 'One small thing, then you’re free.', 'No pressure. Just the next moment.'];
+function celebrating(){ return CEL && Date.now() < CEL.until ? CEL : null; }
+
+function empty(){
+  return head() +
+  '<div class="rise" style="--i:1">' + tallyRow('wave', 'Nothing on the thread yet. Shall we tie the first knot?', 84) + '</div>' +
+  '<h1 class="h1 rise" id="h" tabindex="-1" style="--i:2"><span class="dim">Nothing on the thread yet.</span><br>Start with one.</h1>' +
+  '<p class="lead muted rise" style="--i:3">Pick something you already do every day, then hook one tiny habit onto it. That\'s all it takes to begin.</p><div class="spacer"></div>' +
+  '<div class="rise" style="--i:4">' + cta('Make a plan', 'start') + '</div>';
+}
+
+views.today = function(){
+  var act = active(), t = todayStr();
+  if (!act.length) return empty();
+  var next = act.filter(function(h){ return !h.log[t]; })[0];
+  var due = act.filter(checkDue)[0];
+  var rdy = act.filter(ready)[0];
+  var out = head();
+  var cel = celebrating(), mood = 'idle', msg = LINES[Math.abs(diffDays('2026-01-01', t)) % LINES.length];
+  if (cel) { mood = 'cheer'; msg = cel.msg; }
+  else if (rdy) { mood = 'cheer'; msg = 'Something is ready to graduate. Look below.'; }
+  else if (due) { mood = 'think'; msg = 'One quick question when you have a second.'; }
+  else if (!next) { mood = 'happy'; msg = 'That’s the day. Nothing else asks for you.'; }
+  else if (slipped(next)) { msg = quiz().slip === 'bad' ? 'A slip isn’t a verdict. The small version is plenty today.' : quiz().slip === 'reset' ? 'No need to wait for Monday. Today’s small version counts.' : 'Yesterday’s gone. Today’s small version is all I need.'; }
+  out += '<div class="rise" style="--i:1">' + tallyRow(mood, msg, 84) + '</div>';
+
+  if (next) {
+    var sm = slipped(next), txt = sm ? next.small : next.action;
+    var big = (cue(next) + ', ' + txt).length > 46 ? ' md' : '';
+    var tot = Object.keys(next.log).length;
+    out += '<section class="stack rise" style="gap:16px;--i:2">' +
+      '<h1 class="h1' + big + '" id="h" tabindex="-1"><span class="dim">' + esc(cue(next)) + ',</span><br>' + esc(txt) + '.</h1>' +
+      '<button type="button" class="navlink" style="color:var(--muted);font-weight:400;font-size:15px;align-self:flex-start" data-act="openHabit" data-id="' + next.id + '">' + esc((next.who ? cap(next.who) + ' · ' : '') + tot + (tot === 1 ? ' time' : ' times') + ' so far') + I.right + '</button>' +
+      (sm ? '<p class="small muted" style="font-size:15px">Yesterday slipped, and that\'s fine. Nothing resets. Today\'s version is smaller. <button type="button" class="navlink" style="min-height:44px;font-size:15px" data-act="openMissed" data-id="' + next.id + '">Why that\'s fine</button></p>' : '') +
+      '<button type="button" class="cta done" data-act="done" data-id="' + next.id + '" data-kind="' + (sm ? 'small' : 'full') + '" aria-label="Mark done: ' + esc(txt) + '"><span class="dot">' + I.check + '</span><span>Done</span></button>' +
+      (!sm ? '<button type="button" class="link left" style="padding-inline:4px" data-act="done" data-id="' + next.id + '" data-kind="small">Hard day? Just ' + esc(next.small) + '</button>' : '') +
+    '</section>';
+  } else {
+    out += '<h1 class="h1 rise" id="h" tabindex="-1" style="--i:2"><span class="dim">That\'s the day.</span><br>Nothing else asks for you.</h1>';
+  }
+  if (!quiet()) out += weekStrip(next || act[0]) + goalBar(next || act[0]);
+
+  var list = next ? act.filter(function(h){ return h.id !== next.id; }) : act;
+  if (list.length) {
+    out += '<section class="stack" style="gap:8px"><h2 class="sec">' + (next ? 'Later today' : 'Today') + '</h2><div class="thread">' + list.map(function(h){ return node(h); }).join('') + '</div></section>';
+  }
+
+  if (due) {
+    out += '<section class="card"><span class="kicker">Weekly check-in</span><h2>Did “' + esc(due.action) + '” start on its own this week?</h2>' +
+      '<div class="seg">' + [['Not yet',0],['Sometimes',1],['Yes',2]].map(function(c){ return '<button type="button" data-act="checkin" data-id="' + due.id + '" data-v="' + c[1] + '" aria-pressed="false">' + c[0] + '</button>'; }).join('') + '</div></section>';
+  }
+  if (rdy) {
+    out += '<button type="button" class="card" style="border:0;color:var(--fg);text-align:left;cursor:pointer;font-size:inherit;flex-direction:row;align-items:center;gap:12px" data-act="gradOpen" data-id="' + rdy.id + '"><span style="flex-grow:1"><span class="kicker" style="display:block">Ready to graduate</span><span style="font-size:17px;font-weight:500">“' + esc(rdy.action) + '” just happens now.</span></span>' + I.right + '</button>';
+  }
+  var ns = nextShot();
+  if (ns && !due && !rdy) {
+    out += '<button type="button" class="card" style="border:0;color:var(--fg);text-align:left;cursor:pointer;font-size:inherit;flex-direction:row;align-items:center;gap:12px" data-act="openShot" data-id="' + ns.id + '"><span style="flex-grow:1"><span class="kicker" style="display:block">' + (recShots().indexOf(ns.id) >= 0 ? 'Picked for you · 30 seconds' : 'A 30-second shot') + '</span><span style="font-size:17px;font-weight:500">' + esc(ns.t) + '</span></span>' + I.right + '</button>';
+  }
+  if (!storageOk) out += '<p class="small muted">This browser can\'t save data, so your habits last only until you close the tab.</p>';
+
+  out += '<div class="spacer"></div>' + '<button type="button" class="cta quiet" data-act="free"><span>I have a few free minutes</span><span class="dot">' + I.arrow + '</span></button>';
+  return out;
+};
+
+function buildOptions(mins){
+  var o = [], t = todayStr();
+  active().forEach(function(h){
+    if (h.log[t]) return;
+    if (h.m <= mins) o.push({title:cap(h.action), note:cue(h), m:h.m, hid:h.id, kind:'full'});
+    if (h.m > 2 && 2 <= mins) o.push({title:cap(h.small), note:'The small version · ' + cue(h), m:2, hid:h.id, kind:'small'});
+  });
+  S.likes.forEach(function(l){ if (l.m <= mins) o.push({title:l.t, note:'From your list', m:l.m}); });
+  if (mins >= 1) o.push({title:'Ten slow breaths', note:'Anytime', m:1});
+  o.sort(function(a, b){ return b.m - a.m; });
+  return o.slice(0, 5);
+}
+
+views.free = function(){
+  OPTS = buildOptions(F.mins);
+  return '<div class="topbar">' + back('today', 'Today') + '</div>' +
+  '<div class="stack" style="gap:2px"><h1 class="sec" id="h" tabindex="-1" style="font-weight:400;font-size:17px">I have</h1><div class="durs" role="group" aria-label="How many minutes you have">' +
+    [2, 10, 30].map(function(m){ return '<button type="button" data-act="dur" data-m="' + m + '" aria-pressed="' + (F.mins === m ? 'true' : 'false') + '" aria-label="' + m + ' minutes">' + m + '</button>'; }).join('') +
+    '<span class="muted" style="font-size:17px">minutes</span></div></div>' +
+  '<p class="muted">One good thing before the feed picks for you.</p>' +
+  '<div class="rows">' + OPTS.map(function(o, i){
+    return '<button type="button" class="rowbtn" data-act="startItem" data-i="' + i + '"><span class="t"><span>' + esc(o.title) + '</span><span class="n">' + esc(o.note) + '</span></span><span class="mins">' + o.m + ' min</span>' + I.right + '</button>';
+  }).join('') + '</div>' +
+  '<div class="spacer"></div><button type="button" class="link" data-act="go" data-to="today">Nothing, I\'ll just sit for a bit</button>';
+};
+
+function clockText(left){ return Math.floor(left / 60) + ':' + z2(left % 60); }
+views.doing = function(){
+  var it = TM.item, total = TM.total, pct = ((total - TM.left) / total * 100).toFixed(1) + '%';
+  var lbl = TM.running ? 'Pause' : (TM.left === 0 ? 'Finished' : (TM.left < total ? 'Resume' : 'Start'));
+  return '<div class="topbar">' + back('free', 'Pick something else') + '</div>' +
+  '<div class="stack" style="gap:6px"><span class="muted" style="font-size:15px">' + (it.hid ? 'Your habit · ' : '') + (total / 60) + ' minutes</span><h1 class="h1" id="h" tabindex="-1">' + esc(it.title) + '.</h1></div>' +
+  '<div class="stack" style="gap:20px;padding-top:24px"><div class="clock" id="clock">' + clockText(TM.left) + '</div>' +
+  '<div class="track" aria-hidden="true"><i style="left:0;top:8px;width:100%;height:4px;border-radius:2px;background:var(--track)"></i><i id="bar" style="left:0;top:8px;width:' + pct + ';height:4px;border-radius:2px;background:var(--accent)"></i><i id="knot" style="top:0;left:calc(' + pct + ' - 10px);width:20px;height:20px;border-radius:50%;background:var(--accent);border:3px solid var(--bg)"></i></div>' +
+  '<p class="muted">' + (it.hid ? 'Finishing counts as a vote for this habit.' : 'Leave the phone in your pocket if you can.') + '</p></div>' +
+  '<div class="spacer"></div><div class="stack">' + bigBtn(lbl, 'tstart', TM.left === 0 ? 'disabled style="opacity:.6"' : '') + '<button type="button" class="link strong" data-act="tdone">I\'m done</button></div>';
+};
+function paintTimer(){
+  if (V !== 'doing' || !TM) return;
+  var c = $('#clock'), b = $('#bar'), k = $('#knot');
+  var pct = ((TM.total - TM.left) / TM.total * 100).toFixed(1) + '%';
+  if (c) c.textContent = clockText(TM.left);
+  if (b) b.style.width = pct;
+  if (k) k.style.left = 'calc(' + pct + ' - 10px)';
+}
+function stopTimer(){ if (TM && TM.iv) { clearInterval(TM.iv); TM.iv = null; } }
+function tick(){
+  if (!TM || !TM.running) return;
+  TM.left = Math.max(0, Math.ceil((TM.endAt - Date.now()) / 1000));
+  paintTimer();
+  if (TM.left <= 0) { TM.running = false; stopTimer(); render(false); toast('Time is up. Well done.'); }
+}
+
+/* rings + tally */
+function ringsSvg(h){
+  var n = Math.min(12, weekNum(h)), wn = weekNum(h), t = todayStr(), out = '';
+  var maxR = 94, minR = n === 1 ? 44 : 16;
+  var step = n > 1 ? Math.min(14, (maxR - minR) / (n - 1)) : 0;
+  out += '<circle cx="100" cy="100" r="7" fill="var(--dim)"/>';
+  for (var k = 0; k < n; k++) {
+    var w = wn - n + k, start = addDays(h.created, 7 * w), avail = 0, done = 0;
+    for (var d = 0; d < 7; d++) { var ds = addDays(start, d); if (ds <= t) { avail++; if (h.log[ds]) done++; } }
+    var ratio = avail ? done / avail : 0;
+    var r = minR + step * k, sw = (3 + 6 * ratio).toFixed(1);
+    var last = k === n - 1;
+    out += '<circle cx="100" cy="100" r="' + r.toFixed(1) + '" fill="none" stroke-width="' + sw + '" style="stroke:' + (last ? 'var(--accent)' : 'var(--muted)') + ';opacity:' + (last ? 1 : (0.3 + 0.5 * k / Math.max(n - 1, 1)).toFixed(2)) + '"/>';
+  }
+  return '<svg viewBox="0 0 200 200" role="img" aria-label="' + n + ' growth ring' + (n === 1 ? '' : 's') + ', one per week. A ring is thicker when you did the habit on more days that week. The newest ring is amber.">' + out + '</svg>';
+}
+function tally(h){
+  var t = todayStr(), out = '', missed = 0, done = 0;
+  for (var i = 0; i < 42; i++) {
+    var ds = addDays(t, i - 41), st, hgt, col, extra = '';
+    if (ds < h.created) { hgt = 4; col = 'var(--track)'; }
+    else if (h.log[ds]) { done++; hgt = h.log[ds] === 'small' ? 18 : 28; col = ds === t ? 'var(--accent)' : 'var(--fg)'; }
+    else if (ds === t) { hgt = 28; col = 'transparent'; extra = ';border:1.5px solid var(--accent)'; }
+    else { missed++; hgt = 8; col = 'var(--dim)'; }
+    out += '<i style="height:' + hgt + 'px;background:' + col + extra + '"></i>';
+  }
+  return '<div class="tally" role="img" aria-label="Tally of the last 42 days: ' + done + ' days done, ' + missed + ' days it slipped.">' + out + '</div>';
+}
+
+views.habit = function(){
+  var h = byId(P.id);
+  if (!h) return views.today();
+  var l = last42(h), tot = Object.keys(h.log).length, wk = weekNum(h), tw = thisWeekCheck(h);
+  if (EDIT) {
+    return '<div class="topbar"><button type="button" class="back" data-act="cancelEdit">' + I.left + 'Cancel</button></div>' +
+    '<h1 class="h1 sm" id="h" tabindex="-1">Edit plan</h1>' +
+    '<div class="field"><label for="e-moment">After I…</label><input id="e-moment" type="text" data-in="eMoment" value="' + esc(D.eMoment) + '" autocomplete="off"></div>' +
+    '<div class="field"><label for="e-action">I will…</label><input id="e-action" type="text" data-in="eAction" value="' + esc(D.eAction) + '" autocomplete="off"></div>' +
+    '<div class="field"><label for="e-small">On a hard day, at least…</label><input id="e-small" type="text" data-in="eSmall" value="' + esc(D.eSmall) + '" autocomplete="off"></div>' +
+    '<div class="field"><label for="e-who">I\'m becoming…</label><input id="e-who" type="text" data-in="eWho" value="' + esc(D.eWho) + '" autocomplete="off"></div>' +
+    '<div class="spacer"></div><div class="stack">' + bigBtn('Save changes', 'saveEdit') + '<button type="button" class="link" data-act="cancelEdit">Cancel</button></div>';
+  }
+  var name = h.who ? '<span class="dim">Becoming</span><br>' + esc(h.who) + '.' : esc(cap(h.action)) + '.';
+  var out = '<div class="topbar">' + back(LASTTAB, TABNAME[LASTTAB]) + '<button type="button" class="navlink" data-act="edit">Edit</button></div>' +
+  '<div class="stack" style="gap:8px"><h1 class="h1" id="h" tabindex="-1">' + name + '</h1><p class="muted" style="font-size:15px">' + esc(cue(h)) + ', ' + esc(h.action) + '. ' + tot + (tot === 1 ? ' time' : ' times') + ' since ' + esc(new Date(h.created + 'T00:00:00').toLocaleDateString(undefined, {day:'numeric', month:'short'})) + '.</p></div>' +
+  '<div class="rings">' + ringsSvg(h) + '<div class="stack" style="gap:6px"><h2 style="font-size:17px;font-weight:700">Week ' + wk + '</h2><p class="small muted">One ring a week, thicker when you did it on more days. Habits settle anywhere from 3 weeks to 8 months, so keep going at your own pace.</p></div></div>' +
+  '<section class="stack" style="gap:10px"><div style="display:flex;justify-content:space-between;align-items:baseline"><h2 class="sec">Last ' + l[1] + ' days</h2><span style="font-size:15px"><b>' + l[0] + '</b> of ' + l[1] + ' days</span></div>' + tally(h) + '<p class="small muted">Short marks are days it slipped. They stay small and nothing resets.</p></section>' +
+  '<section class="stack" style="gap:10px"><h2 style="font-size:17px;font-weight:500">This week, did it start on its own?</h2><div class="seg" role="group" aria-label="Weekly check-in">' +
+    [['Not yet',0],['Sometimes',1],['Yes',2]].map(function(c){ return '<button type="button" data-act="checkin" data-id="' + h.id + '" data-v="' + c[1] + '" aria-pressed="' + (tw && tw.v === c[1] ? 'true' : 'false') + '">' + c[0] + '</button>'; }).join('') +
+  '</div><p class="small muted">Three yeses in a row and it graduates off your list.</p></section>';
+  if (ready(h)) out += '<button type="button" class="cta" data-act="gradOpen" data-id="' + h.id + '"><span>Graduate this habit</span><span class="dot">' + I.arrow + '</span></button>';
+  out += '<div class="spacer"></div>';
+  if (CONF.remove) out += '<div class="card"><h2>Remove this habit?</h2><p class="small muted">Its history is deleted and can\'t be brought back.</p><div class="seg" style="grid-template-columns:1fr 1fr"><button type="button" data-act="removeYes" data-id="' + h.id + '" style="background:var(--danger);color:var(--bg);font-weight:700">Remove</button><button type="button" data-act="removeNo">Keep it</button></div></div>';
+  else out += '<button type="button" class="link danger" data-act="removeAsk">Remove this habit</button>';
+  return out;
+};
+
+views.graduate = function(){
+  var h = byId(P.id);
+  if (!h) return views.today();
+  var tot = Object.keys(h.log).length;
+  return '<div class="topbar">' + back('list', 'Habits') + '</div>' +
+  '<svg width="112" height="112" viewBox="0 0 200 200" role="img" aria-label="A full set of growth rings" style="align-self:flex-start"><circle cx="100" cy="100" r="9" fill="var(--accent)"/>' + [22, 37, 53, 70, 88].map(function(r, i){ return '<circle cx="100" cy="100" r="' + r + '" fill="none" stroke="var(--accent)" stroke-width="' + (5 + i * 1.3) + '"/>'; }).join('') + '</svg>' +
+  '<div class="stack" style="gap:12px"><h1 class="h1" id="h" tabindex="-1"><span class="dim">' + esc(cap(h.action)) + '</span><br>has graduated.</h1><p class="lead muted">Three weeks running, you said it just happens. It doesn\'t need a place on your list anymore.</p></div>' +
+  '<section class="card"><span class="muted" style="font-size:15px">' + esc(cue(h)) + ', ' + esc(h.action) + '.</span><div class="stats"><div><b>' + tot + '</b><span>times</span></div><div><b>' + age(h) + '</b><span>days</span></div><div><b>' + esc(new Date(h.created + 'T00:00:00').toLocaleDateString(undefined, {day:'numeric', month:'short'})) + '</b><span>started</span></div></div></section>' +
+  '<div class="spacer"></div><div class="stack">' + bigBtn('Take it off my list', 'gradYes', 'data-id="' + h.id + '"') + '<button type="button" class="link" data-act="gradLater" data-id="' + h.id + '">Keep it a little longer</button></div>' +
+  '<p class="small muted" style="text-align:center">A slot opens up. You can build up to three habits at once, so each one gets real attention.</p>';
+};
+
+views.list = function(){
+  var act = active(), gr = graduated(), full = act.length >= 3, ex = S.habits.some(function(h){ return h.example; });
+  var out = '<div class="topbar"><span></span><button type="button" class="navlink" data-act="go" data-to="settings">Settings</button></div>' +
+  '<div class="stack" style="gap:8px"><h1 class="h1" id="h" tabindex="-1">Your habits.</h1><p class="muted">Up to three at a time, so each one gets real attention.</p></div>';
+  if (ex) out += '<div class="card"><p class="small muted" style="font-size:15px">These are example habits. Clear them whenever you\'re ready to start your own.</p><button type="button" class="link left accent" style="min-height:44px" data-act="clearExamples">Clear the examples</button></div>';
+  out += '<section class="stack" style="gap:4px"><h2 class="sec">Building now · ' + act.length + ' of 3</h2>' +
+    (act.length ? '<div class="rows">' + act.map(function(h){
+      var r = ready(h);
+      return '<button type="button" class="rowbtn" data-act="openHabit" data-id="' + h.id + '"><span class="t"><span>' + esc(cap(h.who || h.action)) + '</span><span class="n ' + (r ? 'hot' : '') + '">' + (r ? 'Ready to graduate · 3 yeses in a row' : esc(cue(h)) + ' · week ' + weekNum(h)) + '</span></span>' + I.right + '</button>';
+    }).join('') + '</div>' : '<p class="muted small">Nothing yet.</p>') +
+    (full ? '<p class="small muted" style="padding-top:8px">All three slots are full. When a habit graduates, a slot opens for the next one.</p>' : '<div style="padding-top:12px">' + cta('Add a habit', 'start') + '</div>') + '</section>';
+  if (gr.length) out += '<section class="stack" style="gap:4px"><h2 class="sec">Graduated</h2><div class="rows">' + gr.map(function(h){
+    return '<button type="button" class="rowbtn" data-act="openHabit" data-id="' + h.id + '"><span class="t"><span style="color:var(--muted)">' + esc(cap(h.who || h.action)) + '</span><span class="n">' + esc(cue(h)) + ' · ' + Object.keys(h.log).length + ' times</span></span>' + I.right + '</button>';
+  }).join('') + '</div></section>';
+  out += '<section class="stack" style="gap:8px"><h2 class="sec">Things I like doing</h2><p class="small muted">These show up when you have a few free minutes.</p><div style="border-top:1px solid var(--line)">' +
+    S.likes.map(function(l, i){ return '<div class="plainrow"><span class="t"><span style="font-size:17px">' + esc(l.t) + '</span><span class="small muted">' + l.m + ' min</span></span><button type="button" class="iconbtn" data-act="delLike" data-i="' + i + '" aria-label="Remove ' + esc(l.t) + '">' + I.x + '</button></div>'; }).join('') + '</div>' +
+    '<div class="inline"><div class="field"><label for="like-t">Add one</label><input id="like-t" type="text" data-in="likeT" value="' + esc(D.likeT || '') + '" placeholder="Water the plants" autocomplete="off"></div>' +
+    '<div class="field" style="flex-grow:0;width:104px"><label for="like-m">Minutes</label><select id="like-m" data-in="likeM">' + [1, 2, 5, 8, 10, 15, 20, 30].map(function(m){ return '<option value="' + m + '"' + (String(D.likeM || 5) === String(m) ? ' selected' : '') + '>' + m + '</option>'; }).join('') + '</select></div>' +
+    '<button type="button" class="mini" data-act="addLike">Add</button></div></section>';
+  return out;
+};
+
+views.settings = function(){
+  var json = JSON.stringify(S);
+  return '<div class="topbar">' + back(LASTTAB, TABNAME[LASTTAB]) + '</div><h1 class="h1 sm" id="h" tabindex="-1">Settings</h1>' +
+  '<section class="stack" style="gap:10px"><h2 class="sec">Profile</h2><div class="inline"><div class="field"><label for="pn">Your name</label><input id="pn" type="text" data-in="pname2" value="' + esc(S.profile.name || '') + '" autocomplete="given-name" maxlength="30"></div><button type="button" class="mini" data-act="saveName">Save</button></div></section>' +
+  '<section class="stack" style="gap:10px"><h2 class="sec">Home screen</h2><div class="seg" role="group" aria-label="Home screen" style="grid-template-columns:1fr 1fr">' +
+    [['Full picture','show'],['Next step only','quiet']].map(function(o){ return '<button type="button" data-act="homeStyle" data-v="' + o[1] + '" aria-pressed="' + ((quiet() ? 'quiet' : 'show') === o[1] ? 'true' : 'false') + '">' + o[0] + '</button>'; }).join('') + '</div>' +
+    '<button type="button" class="link left accent" style="min-height:44px" data-act="go" data-to="ask" data-i="0">' + (quizCount() ? 'Retake Tally’s questions' : 'Answer Tally’s six questions') + '</button></section>' +
+  '<section class="stack" style="gap:10px"><h2 class="sec">Appearance</h2><div class="seg" role="group" aria-label="Appearance">' +
+    [['System','system'],['Light','light'],['Dark','dark']].map(function(o){ return '<button type="button" data-act="theme" data-v="' + o[1] + '" aria-pressed="' + ((S.theme || 'system') === o[1] ? 'true' : 'false') + '">' + o[0] + '</button>'; }).join('') + '</div></section>' +
+  '<section class="stack" style="gap:10px"><h2 class="sec">Your data</h2><p class="small muted">Everything is saved on this device, in this browser only. It doesn\'t sync to other devices. Copy this backup somewhere safe, or paste one below to restore it.</p>' +
+    '<div class="field"><label for="export">Backup</label><textarea id="export" readonly>' + esc(json) + '</textarea></div><button type="button" class="mini" style="align-self:flex-start" data-act="copyExport">Copy backup</button>' +
+    '<div class="field" style="padding-top:8px"><label for="import">Restore from a backup</label><textarea id="import" data-in="importText" placeholder="Paste a backup here">' + esc(D.importText || '') + '</textarea></div><button type="button" class="mini" style="align-self:flex-start" data-act="importGo">Restore</button></section>' +
+  '<section class="stack" style="gap:8px">' + (CONF.reset ? '<div class="card"><h2>Delete everything?</h2><p class="small muted">All habits and history on this device are removed.</p><div class="seg" style="grid-template-columns:1fr 1fr"><button type="button" data-act="resetYes" style="background:var(--danger);color:var(--bg);font-weight:700">Delete</button><button type="button" data-act="resetNo">Keep</button></div></div>' : '<button type="button" class="link danger left" data-act="resetAsk">Delete all my data</button>') + '</section>';
+};
+
+views.shots = function(){
+  return '<div class="topbar"><span></span><span class="small muted">' + shotsSeen() + ' of ' + SHOTS.length + ' seen</span></div>' +
+  '<div class="stack" style="gap:8px"><h1 class="h1" id="h" tabindex="-1">Shots.</h1><p class="muted">Thirty seconds each. The psychology behind how this app works.</p></div>' +
+  '<div class="rows">' + SHOTS.map(function(x, i){
+    var fm = recShots().indexOf(x.id) >= 0 && !shotDone(x.id);
+    return '<button type="button" class="rowbtn" data-act="openShot" data-id="' + x.id + '"><span class="num">' + z2(i + 1) + '</span><span class="t"><span>' + esc(x.t) + '</span><span class="n' + (fm ? ' hot' : '') + '">' + (fm ? 'Picked for you · ' : '') + esc(x.n) + '</span></span>' +
+      (shotDone(x.id) ? '<span class="seen" role="img" aria-label="Seen">' + I.check + '</span>' : '') + I.right + '</button>';
+  }).join('') + '</div>';
+};
+
+views.shot = function(){
+  var x = shotById(P.id);
+  if (!x) return views.shots();
+  var f = Math.max(0, Math.min(x.f.length - 1, P.f | 0)), fr = x.f[f], last = f === x.f.length - 1;
+  var idx = SHOTS.indexOf(x), nx = SHOTS[idx + 1];
+  var bars = x.f.map(function(_, i){ return '<span class="' + (i <= f ? 'on' : '') + '"></span>'; }).join('');
+  var out = '<div class="topbar">' + back('shots', 'Shots') + '<button type="button" class="navlink" data-act="replay" id="replay">' + I.replay + 'Replay</button></div>' +
+    '<div class="bars" aria-hidden="true">' + bars + '</div>' +
+    '<figure class="art"><svg viewBox="0 0 320 212" role="img" aria-label="' + esc(x.alt) + '">' + x.svg(f) + '</svg></figure>' +
+    '<div class="stack" style="gap:12px"><h1 class="h1 sm" id="h" tabindex="-1">' + esc(fr.h) + '</h1><p class="lead muted">' + esc(fr.b) + '</p></div>';
+  if (last) out += '<div class="card"><span class="kicker">Try it</span><p style="font-size:17px;line-height:1.45">' + esc(x.tryText) + '</p>' +
+    (x.tryAct ? '<button type="button" class="link left accent" style="min-height:44px" data-act="' + x.tryAct.a + '">' + esc(x.tryAct.l) + '</button>' : '') + '</div>';
+  out += '<div class="spacer"></div><div class="stack">';
+  if (!last) out += cta('Next', 'shotNav', 'data-id="' + x.id + '" data-f="' + (f + 1) + '"');
+  else if (nx) out += cta('Next shot', 'openShot', 'data-id="' + nx.id + '"');
+  else out += bigBtn('Back to Today', 'go', 'data-to="home"');
+  out += f > 0 ? '<button type="button" class="link" data-act="shotNav" data-id="' + x.id + '" data-f="' + (f - 1) + '">Back</button>' : (last ? '' : '<button type="button" class="link" data-act="go" data-to="shots">All shots</button>');
+  if (last) out += '<button type="button" class="link" data-act="go" data-to="shots">All shots</button>';
+  return out + '</div>';
+};
+
+
+views.ask = function(){
+  var n = P.i || 0, q = QS[n];
+  if (!q) return views.learned();
+  var a = quiz()[q.k], nm = S.profile && S.profile.name;
+  var bars = QS.map(function(_, k){ return '<span class="' + (k <= n ? 'on' : '') + '"></span>'; }).join('');
+  var bk = n > 0 ? back('ask', 'Back', n - 1) : S.seen ? back('settings', 'Settings') : back('intro', 'Back', 2);
+  return '<div class="topbar">' + bk + '<span class="small muted">About you · ' + (n + 1) + ' of ' + QS.length + '</span></div><div class="bars" aria-hidden="true">' + bars + '</div>' +
+    '<div class="trow rise" style="--i:0"><span class="tbtn" style="cursor:default">' + buddy(q.mood, 76) + '</span><p class="bubble">' + esc(q.say(nm)) + '</p></div>' +
+    '<div class="stack rise" style="gap:8px;--i:1"><h1 class="h1 sm" id="h" tabindex="-1">' + esc(q.q) + '</h1>' + (q.sub ? '<p class="muted">' + esc(q.sub) + '</p>' : '') + '</div>' +
+    '<div class="rows rise" role="group" aria-label="' + esc(q.q) + '" style="--i:2">' + q.o.map(function(o){ return radioRow(o[1], o[2] || '', a === o[0], 'ans', 'data-k="' + q.k + '" data-v="' + o[0] + '"'); }).join('') + '</div>' +
+    '<div class="spacer"></div>' + (S.seen ? '' : '<button type="button" class="link" data-act="go" data-to="intro" data-i="3">Skip the questions</button>');
+};
+views.learned = function(){
+  var nm = S.profile && S.profile.name, ins = insights();
+  return '<div class="topbar">' + back('ask', 'Back', QS.length - 1) + '<span class="small muted">About you</span></div>' +
+    '<div class="trow rise" style="--i:0"><span class="tbtn" style="cursor:default">' + buddy('cheer', 76, true) + '</span><p class="bubble">' + (nm ? 'Thanks, ' + esc(nm) + '. Here’s what I heard.' : 'Thanks. Here’s what I heard.') + '</p></div>' +
+    '<h1 class="h1 sm rise" id="h" tabindex="-1" style="--i:1">Here’s how I’ll<br><span class="dim">help you.</span></h1>' +
+    ins.map(function(x, k){ return '<div class="card rise" style="--i:' + (2 + k) + '"><span class="kicker">' + esc(x.k) + '</span><p style="font-size:17px;line-height:1.45">' + esc(x.t) + '</p></div>'; }).join('') +
+    '<div class="spacer"></div><div class="stack stickycta rise" style="--i:' + (2 + ins.length) + '">' + cta(S.seen ? 'Back to Today' : 'Pick my first habit', 'learnedGo') +
+    '<button type="button" class="link" data-act="go" data-to="ask" data-i="0">Change my answers</button></div>';
+};
+
+views.missed = function(){
+  var h = byId(P.id);
+  if (!h) return views.today();
+  var sc = slipCount(h), m = sc[0], n = sc[1];
+  return '<div class="topbar">' + back('today', 'Today') + '</div>' +
+    '<div class="trow rise" style="--i:0"><span class="tbtn" style="cursor:default">' + buddy('idle', 76) + '</span><p class="bubble">Hey, it happens to everyone.</p></div>' +
+    '<div class="stack rise" style="gap:14px;--i:1"><h1 class="h1" id="h" tabindex="-1"><span class="dim">Yesterday slipped.</span><br>That’s fine.</h1><p class="lead muted">One missed day barely matters. What helps is not missing twice, so today’s version is smaller.</p></div>' +
+    '<section class="card rise" style="padding:20px;--i:2"><span class="kicker">Today’s small version</span><p style="font-size:28px;font-weight:800;line-height:1.1;letter-spacing:-.02em">' + esc(cap(h.small)) + '.</p><p class="small muted" style="font-size:15px">' + esc(cue(h)) + '</p></section>' +
+    '<div class="stack rise" style="--i:3">' + bigBtn('Keep today small', 'go', 'data-to="today"') + '<button type="button" class="link" data-act="full" data-id="' + h.id + '" data-back="1">Do the full version instead</button></div>' +
+    '<div class="spacer"></div>' +
+    (n >= 3 && m >= 3 ? '<section class="stack rise" style="gap:6px;padding-top:20px;border-top:1px solid var(--line);--i:4"><h2 style="font-size:17px;font-weight:700">It slipped ' + m + ' of the last ' + n + ' days</h2><p class="small muted" style="font-size:15px;line-height:1.5">When a habit keeps slipping, the moment is usually the problem, not you. ' + esc(cap(h.moment)) + ' may be too busy or too unpredictable.</p><button type="button" class="navlink" style="min-height:48px;align-self:flex-start;padding:0" data-act="missedEdit" data-id="' + h.id + '">Hook it to a calmer moment' + I.right + '</button></section>' : '');
+};
+/* ---------- render ---------- */
+function render(focus){
+  var app = $('#app'), html = views[V]();
+  app.className = (ANIM ? 'anim ' : '') + (TABS[V] ? 'has-tabs' : '');
+  document.body.classList.toggle('tabs-on', !!TABS[V]);
+  ANIM = false;
+  app.innerHTML = html + (TABS[V] ? tabbar(V) : '');
+  if (V === 'habit' && EDIT) { /* cancel button target */ }
+  if (focus) { var h = $('#h'); if (h) h.focus({preventScroll:true}); }
+}
+
+/* ---------- actions ---------- */
+function logDone(h, kind){ h.log[todayStr()] = kind === 'small' ? 'small' : 'full'; save(); }
+function startPlan(){
+  if (active().length >= 3) { toast('All three slots are full. Graduate a habit to add another.'); go('list'); return; }
+  D = {moment:'I pour my coffee', custom:'', action:'read two pages', customAction:'', small:'', who:'', momentFinal:'', actionFinal:''};
+  go('moment');
+}
+function normMoment(s){ s = s.trim().replace(/[.!]+$/, ''); s = s.replace(/^after\s+/i, ''); return s; }
+
+function makeExamples(){
+  var t = todayStr();
+  function gen(created, miss, seed, skipYesterday){
+    var log = {}, n = diffDays(created, t);
+    for (var i = 0; i < n; i++) { var ds = addDays(created, i); if ((i * 7 + seed) % miss === 0) continue; if (skipYesterday && i === n - 1) continue; log[ds] = ((i * 5 + seed) % 11 === 0) ? 'small' : 'full'; }
+    return log;
+  }
+  var c1 = addDays(t, -48), c2 = addDays(t, -20), c3 = addDays(t, -71);
+  return [
+    {id:uid() + 'a', moment:'I pour my coffee', action:'read two pages', small:'read one paragraph', m:2, who:'a reader', created:c1, log:gen(c1, 9, 4), checks:[{d:addDays(t,-14),v:1},{d:addDays(t,-7),v:1}], status:'active', example:true},
+    {id:uid() + 'b', moment:'I get home', action:'walk for ten minutes', small:'walk to the corner and back', m:10, who:'a walker', created:c2, log:gen(c2, 6, 2, true), checks:[{d:addDays(t,-7),v:0}], status:'active', example:true},
+    {id:uid() + 'c', moment:'I brush my teeth', action:"write tomorrow's one task", small:'write one word', m:2, who:'someone who plans', created:c3, log:gen(c3, 12, 6), checks:[{d:addDays(t,-21),v:2},{d:addDays(t,-14),v:2},{d:addDays(t,-7),v:2}], status:'active', example:true}
+  ];
+}
+
+function celebrate(h, kind){
+  var w = h.who ? h.who : 'who you’re becoming', pool = ['One vote for ' + w + '.', 'That counts. Nicely done.', 'Another knot tied.', 'Look at you, being ' + w + '.'];
+  CEL = {until:Date.now() + 8000, msg: kind === 'small' ? 'The small version counts. Nothing resets.' : pool[Math.floor(Math.random() * pool.length)]};
+}
+function act(a, el){
+  var ds = el.dataset;
+  switch (a) {
+    case 'go': go(ds.to, ds.i != null ? {i:+ds.i} : undefined); break;
+    case 'start': startPlan(); break;
+    case 'poke': {
+      var m0 = el.dataset.mood, sz = +el.dataset.size;
+      el.innerHTML = buddy('happy', sz); el.classList.remove('poked'); void el.offsetWidth; el.classList.add('poked');
+      clearTimeout(el._t); el._t = setTimeout(function(){ if (el.isConnected) { el.innerHTML = buddy(m0, sz); el.classList.remove('poked'); } }, 1100); break; }
+    case 'obName': {
+      var nm0 = (D.pname || '').trim().slice(0, 30);
+      if (!nm0) { toast('Type a name, or tap Skip for now.'); break; }
+      S.profile.name = nm0; S.profile.created = S.profile.created || todayStr(); save(); go('ask', {i:0}); break; }
+    case 'obSkip': go('ask', {i:0}); break;
+    case 'ans': {
+      if (ANS) break;
+      S.profile.quiz = S.profile.quiz || {}; S.profile.quiz[ds.k] = ds.v; save(); render(false);
+      var n0 = P.i || 0;
+      ANS = setTimeout(function(){ ANS = null; if (V !== 'ask' || (P.i || 0) !== n0) return; if (n0 + 1 < QS.length) go('ask', {i:n0 + 1}); else go('learned'); }, 380);
+      break; }
+    case 'learnedGo': if (S.seen) go('today'); else go('intro', {i:3}); break;
+    case 'homeStyle': S.profile.quiz = S.profile.quiz || {}; S.profile.quiz.style = ds.v; save(); render(false); break;
+    case 'obPick': D.obI = +ds.i; render(false); break;
+    case 'obGo': {
+      var oa = ACTIONS[D.obI == null ? 0 : D.obI];
+      D = {moment:suggestedMoments()[0] || 'I pour my coffee', custom:'', action:oa.a, customAction:'', small:'', who:'', momentFinal:'', actionFinal:'', obFrom:true, pname:D.pname};
+      go('moment'); break; }
+    case 'saveName': {
+      var nm1 = (D.pname2 != null ? D.pname2 : (S.profile.name || '')).trim().slice(0, 30);
+      S.profile.name = nm1; S.profile.created = S.profile.created || todayStr(); save(); toast(nm1 ? 'Saved. Hi, ' + nm1 + '.' : 'Name cleared.'); break; }
+    case 'openShot': go('shot', {id:ds.id, f:0}); break;
+    case 'shotNav': {
+      var sx = shotById(ds.id), nf = +ds.f;
+      if (sx && nf === sx.f.length - 1 && !shotDone(sx.id)) { S.shotsRead[sx.id] = todayStr(); save(); }
+      go('shot', {id:ds.id, f:nf}); break; }
+    case 'replay': { render(false); var rb = $('#replay'); if (rb) rb.focus({preventScroll:true}); break; }
+    case 'examples':
+      S.habits = S.habits.filter(function(h){ return !h.example; });
+      S.habits = S.habits.concat(makeExamples().slice(0, Math.max(0, 3 - active().length)));
+      S.seen = true; save(); go('today'); toast('Example habits added. Clear them any time from Habits.'); break;
+    case 'pickMoment': D.moment = ds.v; D.custom = ''; render(false); break;
+    case 'toAction':
+      D.momentFinal = D.custom && D.custom.trim() ? normMoment(D.custom) : D.moment;
+      if (!D.momentFinal) { toast('Pick a moment first.'); break; }
+      go('action'); break;
+    case 'pickAction': D.action = ds.v; D.customAction = ''; render(false); break;
+    case 'toReview': {
+      var ca = D.customAction && D.customAction.trim();
+      var preset = ACTIONS.filter(function(x){ return x.a === D.action; })[0];
+      D.actionFinal = ca ? ca.replace(/[.!]+$/, '').replace(/^i('ll| will)\s+/i, '') : D.action;
+      if (!D.actionFinal) { toast('Pick or write a tiny action first.'); break; }
+      D.small = ca ? 'do the first minute of it' : preset.s; D.who = ca ? '' : preset.who; D.mins = ca ? 5 : preset.m;
+      go('review'); break; }
+    case 'save': {
+      var s = (D.small || '').trim() || 'do the first minute of it';
+      var h = {id:uid(), moment:D.momentFinal, action:D.actionFinal, small:s.replace(/[.!]+$/, ''), m:D.mins || 5, who:(D.who || '').trim(), created:todayStr(), log:{}, checks:[], status:'active'};
+      S.habits.push(h); S.seen = true; save(); if (D.obFrom || S.habits.length === 1) CEL = {until:Date.now() + 9000, msg:'First knot tied' + (S.profile.name ? ', ' + S.profile.name : '') + '. I’ll be here when the moment comes.'}; go('today'); if (!CEL || Date.now() > CEL.until) toast('Habit added.'); break; }
+    case 'toggle': {
+      var hh = byId(ds.id), t = todayStr();
+      if (hh.log[t]) { delete hh.log[t]; save(); render(false); }
+      else { logDone(hh, slipped(hh) ? 'small' : 'full'); celebrate(hh, 'full'); render(false); toast('Marked done.', function(){ delete hh.log[t]; save(); render(false); }); }
+      break; }
+    case 'done': {
+      var d1 = byId(ds.id), t1 = todayStr(), kind = ds.kind;
+      logDone(d1, kind); celebrate(d1, kind); render(false); toast(kind === 'small' ? 'Small version counted. That still counts.' : 'Marked done.', function(){ delete d1.log[t1]; save(); render(false); }); break; }
+    case 'full': FULL[ds.id] = true; if (ds.back) go('today'); else render(false); break;
+    case 'openMissed': go('missed', {id:ds.id}); break;
+    case 'missedEdit': go('habit', {id:ds.id}); act('edit', el); break;
+    case 'checkin': {
+      var c = byId(ds.id); c.checks = c.checks || [];
+      var last = c.checks[c.checks.length - 1], tt = todayStr();
+      if (last && diffDays(last.d, tt) < 7) last.v = +ds.v; else c.checks.push({d:tt, v:+ds.v});
+      save(); render(false); toast('Noted.'); if (ready(c) && V !== 'today') { /* shown on habit view */ } break; }
+    case 'openHabit': go('habit', {id:ds.id}); break;
+    case 'edit': { var e = byId(P.id); D.eMoment = e.moment; D.eAction = e.action; D.eSmall = e.small; D.eWho = e.who || ''; EDIT = true; render(true); break; }
+    case 'cancelEdit': EDIT = false; render(true); break;
+    case 'saveEdit': {
+      var ed = byId(P.id);
+      if (!(D.eMoment || '').trim() || !(D.eAction || '').trim()) { toast('The moment and the action can\'t be empty.'); break; }
+      ed.moment = normMoment(D.eMoment); ed.action = D.eAction.trim(); ed.small = (D.eSmall || '').trim() || ed.small; ed.who = (D.eWho || '').trim();
+      save(); EDIT = false; render(true); toast('Saved.'); break; }
+    case 'removeAsk': CONF.remove = true; render(false); break;
+    case 'removeNo': CONF.remove = false; render(false); break;
+    case 'removeYes': S.habits = S.habits.filter(function(x){ return x.id !== ds.id; }); save(); go('list'); toast('Habit removed.'); break;
+    case 'gradOpen': go('graduate', {id:ds.id}); break;
+    case 'gradYes': { var g = byId(ds.id); g.status = 'graduated'; g.gradDate = todayStr(); save(); go('list'); toast('Graduated. A slot just opened.'); break; }
+    case 'gradLater': { var g2 = byId(ds.id); g2.deferred = todayStr(); save(); go('today'); toast('We\'ll ask again in two weeks.'); break; }
+    case 'free': F.mins = F.mins || 10; go('free'); break;
+    case 'dur': F.mins = +ds.m; render(false); break;
+    case 'startItem': { var it = OPTS[+ds.i]; TM = {item:it, total:it.m * 60, left:it.m * 60, running:false, endAt:0, iv:null}; go('doing'); break; }
+    case 'tstart':
+      if (!TM || TM.left <= 0) break;
+      if (TM.running) { TM.left = Math.max(0, Math.ceil((TM.endAt - Date.now()) / 1000)); TM.running = false; stopTimer(); }
+      else { TM.endAt = Date.now() + TM.left * 1000; TM.running = true; TM.iv = setInterval(tick, 250); }
+      render(false); var b = $('[data-act="tstart"]'); if (b) b.focus(); break;
+    case 'tdone': {
+      var item = TM && TM.item; stopTimer();
+      if (item && item.hid) { var hd = byId(item.hid), td = todayStr(); if (hd && !hd.log[td]) { logDone(hd, item.kind); go('today'); toast('Counted. Well done.', function(){ delete hd.log[td]; save(); render(false); }); break; } }
+      go('today'); toast('Nice. That was a good use of the time.'); break; }
+    case 'addLike': {
+      var tx = (D.likeT || '').trim();
+      if (!tx) { toast('Write what you like doing first.'); break; }
+      S.likes.push({t:tx, m:+(D.likeM || 5)}); D.likeT = ''; save(); render(false); toast('Added.'); break; }
+    case 'delLike': S.likes.splice(+ds.i, 1); save(); render(false); break;
+    case 'theme': S.theme = ds.v; save(); applyTheme(); render(false); break;
+    case 'copyExport': {
+      var ta = $('#export'); ta.select();
+      var done = function(){ toast('Backup copied.'); };
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(ta.value).then(done, function(){ toast('Copy failed. The text is selected, so copy it by hand.'); });
+      else toast('The text is selected. Copy it by hand.');
+      break; }
+    case 'importGo': {
+      try {
+        var obj = JSON.parse((D.importText || '').trim());
+        if (!obj || !Array.isArray(obj.habits)) throw new Error('bad');
+        obj.likes = Array.isArray(obj.likes) ? obj.likes : []; obj.shotsRead = obj.shotsRead && typeof obj.shotsRead === 'object' ? obj.shotsRead : {}; obj.profile = obj.profile && typeof obj.profile === 'object' ? obj.profile : {name:''}; obj.v = 1; S = obj; save(); applyTheme(); D.importText = ''; go('list'); toast('Backup restored.');
+      } catch (er) { toast('That doesn\'t look like a backup. Paste the full text.'); }
+      break; }
+    case 'resetAsk': CONF.reset = true; render(false); break;
+    case 'resetNo': CONF.reset = false; render(false); break;
+    case 'resetYes': S = fresh(); save(); applyTheme(); D = {}; CEL = null; go('intro'); toast('All data deleted.'); break;
+    case 'clearExamples': S.habits = S.habits.filter(function(x){ return !x.example; }); save(); render(false); toast('Examples cleared.'); break;
+    case 'undo': if (lastUndo) { lastUndo(); lastUndo = null; $('#toast').hidden = true; } break;
+  }
+}
+
+document.addEventListener('click', function(e){
+  var el = e.target.closest ? e.target.closest('[data-act]') : null;
+  if (!el || el.disabled) return;
+  act(el.dataset.act, el);
+});
+document.addEventListener('input', function(e){
+  var k = e.target && e.target.dataset ? e.target.dataset.in : null;
+  if (k) D[k] = e.target.value;
+});
+document.addEventListener('change', function(e){
+  var k = e.target && e.target.dataset ? e.target.dataset.in : null;
+  if (k === 'likeM') D.likeM = e.target.value;
+});
+var ptRaf = 0, ptLast = null, reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+document.addEventListener('pointermove', function(e){
+  if (e.pointerType === 'touch' || reduce) return;
+  ptLast = e; if (ptRaf) return;
+  ptRaf = requestAnimationFrame(function(){
+    ptRaf = 0;
+    var svgs = document.querySelectorAll('svg.buddy:not([data-still])');
+    for (var i = 0; i < svgs.length; i++) {
+      var r = svgs[i].getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height * .5;
+      var dx = ptLast.clientX - cx, dy = ptLast.clientY - cy, d = Math.sqrt(dx * dx + dy * dy) || 1, k = Math.min(4.2, d / 28);
+      svgs[i].style.setProperty('--px', (dx / d * k).toFixed(2) + 'px'); svgs[i].style.setProperty('--py', (dy / d * k).toFixed(2) + 'px');
+    }
+  });
+});
+document.addEventListener('keydown', function(e){ if (e.key === 'Enter' && e.target && e.target.id === 'pname') { e.preventDefault(); act('obName', e.target); } });
+document.addEventListener('visibilitychange', function(){ if (!document.hidden && TM && TM.running) tick(); });
+
+applyTheme();
+V = homeView();
+if (V === 'intro' && S.profile && S.profile.name) { var qc = quizCount(); if (qc < QS.length) P = {i:qc}, V = 'ask'; else V = 'learned'; }
+render(false);
+})();
+</script>
+</body>
+</html>
