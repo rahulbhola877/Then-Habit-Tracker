@@ -81,6 +81,7 @@ button,input,select,textarea{font-family:inherit}
 .knot{position:absolute;left:-9px;top:50%;margin-top:-8px;width:16px;height:16px;border-radius:50%;background:var(--bg);border:2px solid var(--dim)}
 .node.is-done .knot{background:var(--accent);border-color:var(--accent)}
 .node .txt{flex-grow:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.node button.txt{background:none;border:0;padding:0;margin:0;text-align:left;color:inherit;font:inherit;cursor:pointer;min-height:44px;justify-content:center}
 .node .cue{font-size:14px;color:var(--muted)}
 .node .act{font-size:19px;font-weight:500;overflow-wrap:anywhere}
 .node.is-done .act{color:var(--muted);text-decoration:line-through}
@@ -209,11 +210,14 @@ button,input,select,textarea{font-family:inherit}
 .tab{min-height:60px;border:0;background:none;color:var(--muted);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:13px;cursor:pointer}
 .tab[aria-current="page"]{color:var(--accent-text);font-weight:700}
 #app.has-tabs{padding-bottom:calc(92px + env(safe-area-inset-bottom,0px))}
+.picks{margin:0;padding:0 0 0 20px;display:flex;flex-direction:column;gap:6px;font-size:17px;font-weight:500}
+.picks li::marker{color:var(--accent-text)}
 .stickycta{position:sticky;bottom:0;padding:16px 0 calc(8px + env(safe-area-inset-bottom,0px));background:linear-gradient(to bottom,transparent,var(--bg) 28%)}
 .tabs-on .toast{top:auto;bottom:calc(72px + env(safe-area-inset-bottom,0px))}
 .forme{color:var(--accent-text)}
 .lock{display:flex;gap:12px;align-items:flex-start}
 .toast[hidden]{display:none}
+.toast{cursor:pointer}
 .toast{position:fixed;left:16px;right:16px;top:calc(12px + env(safe-area-inset-top,0px));max-width:448px;margin:0 auto;background:var(--fg);color:var(--bg);border-radius:16px;padding:6px 8px 6px 16px;display:flex;gap:12px;align-items:center;justify-content:space-between;font-size:16px;z-index:5}
 .toast button{min-height:44px;padding:0 12px;border:0;background:none;color:var(--bg);font-size:16px;font-weight:700;text-decoration:underline;cursor:pointer}
 @media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}.dr{stroke-dashoffset:0!important}.fd{opacity:1!important}.pup{transition:none!important}}
@@ -258,11 +262,41 @@ var I = {
 var KEY = 'then.v1';
 var storageOk = true;
 function fresh(){ return { v:1, seen:false, theme:'system', habits:[], shotsRead:{}, profile:{name:''}, likes:[{t:'Tidy one surface',m:8},{t:'Text someone you miss',m:5}] }; }
+var DRE = /^\d{4}-\d{2}-\d{2}$/;
+function cleanHabit(h){
+  if (!h || typeof h !== 'object' || typeof h.moment !== 'string' || typeof h.action !== 'string' || !DRE.test(h.created || '')) return null;
+  if (!h.moment.trim() || !h.action.trim()) return null;
+  var log = {}, src = h.log && typeof h.log === 'object' ? h.log : {};
+  Object.keys(src).forEach(function(k){ if (DRE.test(k) && (src[k] === 'full' || src[k] === 'small')) log[k] = src[k]; });
+  var checks = Array.isArray(h.checks) ? h.checks.filter(function(c){ return c && DRE.test(c.d || '') && [0, 1, 2].indexOf(c.v) >= 0; }) : [];
+  var o = {id:typeof h.id === 'string' && h.id ? h.id : uid(), moment:h.moment.trim(), action:h.action.trim(), small:typeof h.small === 'string' && h.small.trim() ? h.small.trim() : 'do the first minute of it', m:+h.m > 0 ? +h.m : 2, who:typeof h.who === 'string' ? h.who : '', created:h.created, log:log, checks:checks, status:h.status === 'graduated' ? 'graduated' : 'active'};
+  if (DRE.test(h.gradDate || '')) o.gradDate = h.gradDate;
+  if (DRE.test(h.deferred || '')) o.deferred = h.deferred;
+  if (h.example) o.example = true;
+  return o;
+}
+function cleanState(s, strict){
+  if (!s || typeof s !== 'object' || !Array.isArray(s.habits)) return null;
+  var hs = [], ids = {};
+  for (var i = 0; i < s.habits.length; i++) { var c = cleanHabit(s.habits[i]); if (c) { if (ids[c.id]) c.id = uid(); ids[c.id] = 1; hs.push(c); } else if (strict) return null; }
+  var f = fresh(), p = s.profile && typeof s.profile === 'object' ? s.profile : {};
+  f.habits = hs;
+  f.theme = ['light', 'dark', 'system'].indexOf(s.theme) >= 0 ? s.theme : 'system';
+  if (Array.isArray(s.likes)) f.likes = s.likes.filter(function(l){ return l && typeof l.t === 'string' && l.t.trim() && +l.m > 0; }).map(function(l){ return {t:l.t.trim(), m:+l.m}; });
+  f.shotsRead = s.shotsRead && typeof s.shotsRead === 'object' && !Array.isArray(s.shotsRead) ? s.shotsRead : {};
+  f.profile = {name:typeof p.name === 'string' ? p.name.slice(0, 30) : ''};
+  if (DRE.test(p.created || '')) f.profile.created = p.created;
+  if (p.quiz && typeof p.quiz === 'object') f.profile.quiz = p.quiz;
+  if (p.homeStyle === 'quiet' || p.homeStyle === 'show') f.profile.homeStyle = p.homeStyle;
+  f.seen = !!s.seen || hs.length > 0;
+  if (!f.seen && s.ob && typeof s.ob === 'object' && typeof s.ob.v === 'string') f.ob = s.ob;
+  return f;
+}
 function load(){
   try {
     localStorage.setItem('then.t', '1'); localStorage.removeItem('then.t');
     var r = localStorage.getItem(KEY);
-    if (r) { var s = JSON.parse(r); if (s && Array.isArray(s.habits)) { s.likes = Array.isArray(s.likes) ? s.likes : []; s.shotsRead = s.shotsRead && typeof s.shotsRead === 'object' ? s.shotsRead : {}; s.profile = s.profile && typeof s.profile === 'object' ? s.profile : {name:''}; return s; } }
+    if (r) { var s = cleanState(JSON.parse(r), false); if (s) return s; }
   } catch (e) { storageOk = false; }
   return fresh();
 }
@@ -287,7 +321,10 @@ function active(){ return S.habits.filter(function(h){ return h.status === 'acti
 function graduated(){ return S.habits.filter(function(h){ return h.status === 'graduated'; }); }
 function cue(h){ return 'After ' + h.moment; }
 function byId(id){ for (var i = 0; i < S.habits.length; i++) if (S.habits[i].id === id) return S.habits[i]; return null; }
-function age(h){ return diffDays(h.created, todayStr()) + 1; }
+function endDay(h){ return h.status === 'graduated' && h.gradDate ? h.gradDate : todayStr(); }
+function age(h){ return diffDays(h.created, endDay(h)) + 1; }
+/* days missed in a row, counting back from yesterday */
+function missRun(h){ var d = addDays(todayStr(), -1), k = 0; while (d >= h.created && !h.log[d] && k < 999) { k++; d = addDays(d, -1); } return k; }
 function slipped(h){ var t = todayStr(), y = addDays(t, -1); return h.created < y && !h.log[y] && !h.log[t] && !FULL[h.id]; }
 function slipCount(h){
   var t = todayStr(), n = Math.min(10, diffDays(h.created, t)), m = 0;
@@ -295,20 +332,25 @@ function slipCount(h){
   return [m, n];
 }
 function last42(h){
-  var t = todayStr(), n = Math.min(42, age(h)), c = 0;
+  var t = endDay(h), n = Math.min(42, age(h)), c = 0;
   for (var d = 0; d < n; d++) if (h.log[addDays(t, -d)]) c++;
   return [c, n];
 }
+function canCheck(h){ return h.status === 'active' && age(h) >= 7; }
 function checkDue(h){
-  if (age(h) < 7) return false;
+  if (!canCheck(h)) return false;
   var c = h.checks || [];
   return !c.length || diffDays(c[c.length - 1].d, todayStr()) >= 7;
 }
 function ready(h){
+  if (h.status !== 'active') return false;
   var c = h.checks || [];
   if (c.length < 3) return false;
   if (h.deferred && diffDays(h.deferred, todayStr()) < 14) return false;
-  return c.slice(-3).every(function(x){ return x.v === 2; });
+  var l = c.slice(-3);
+  if (!l.every(function(x){ return x.v === 2; })) return false;
+  /* three weeks in a row: no skipped week between the answers */
+  return diffDays(l[0].d, l[1].d) <= 13 && diffDays(l[1].d, l[2].d) <= 13;
 }
 function thisWeekCheck(h){
   var c = h.checks || [];
@@ -496,7 +538,7 @@ var SHOTS = [
     o += ln(s, [0,2], .6, 'sf', 'path', 'd="M40 170 L150 62"', 1);
     o += fx(s, [0,2], 1.4, 'fm', 'text', 'x="156" y="56" style="font-size:14px"', 'streak');
     o += ln(s, [1,2], 0, 'sx w4', 'path', 'd="M150 62 L153 170"', .5);
-    o += fx(s, [1,2], .5, 'fx', 'text', 'x="162" y="158" ' + BIG, 'back to 0');
+    o += fx(s, [1,2], .5, 'fx', 'text', 'x="153" y="198" ' + MID + ' ' + BIG, 'back to 0');
     o += ln(s, [1,2], .7, 'sf', 'path', 'd="M153 170 L215 118"', .6);
     o += ln(s, 2, 0, 'sa w4', 'path', 'd="M40 170 L150 110 L200 110 L292 44"', 1.4);
     o += fx(s, 2, 1.2, 'fa', 'text', 'x="284" y="32" text-anchor="end" style="font-weight:700"', 'total done');
@@ -619,11 +661,11 @@ var QS = [
    o:[['fine','“No big deal, carry on.”'],['bad','“See? I’m bad at this.”'],['reset','“I’ll start fresh on Monday.”']]},
   {k:'style', mood:'happy', say:function(){ return 'Last one.'; },
    q:'How much do you want to see?',
-   o:[['show','Show me my progress','Days, weekly dots and a progress bar'],['quiet','Keep it quiet','Just the next step, nothing else']]}
+   o:[['show','Show me my progress','Days, weekly dots and a progress bar'],['quiet','Keep it quiet','No charts. Just what’s next.']]}
 ];
 function quiz(){ return (S.profile && S.profile.quiz) || {}; }
 function quizCount(){ var q = quiz(); return QS.filter(function(x){ return q[x.k]; }).length; }
-function quiet(){ return quiz().style === 'quiet'; }
+function quiet(){ var p = S.profile || {}; return (p.homeStyle || quiz().style) === 'quiet'; }
 function suggestedMoments(){
   var q = quiz(), e = q.energy;
   if (!e) return [];
@@ -656,7 +698,9 @@ function insights(){
   }[q.slip];
   if (L) out.push({k:L[0], t:L[1]});
   if (q.why === 'swap') out.push({k:'Doing less of something', t:'I won’t block anything. When you’re bored, tap “I have a few free minutes” and I’ll suggest something better to do.'});
-  else if (q.style === 'quiet') out.push({k:'Quiet mode', t:'Your home screen will only show the next step. You can change that in Settings.'});
+  else if (q.why === 'back') out.push({k:'Getting back on track', t:'Start smaller than you used to. The bigger version can come back once this one sticks.'});
+  else if (q.why === 'look') out.push({k:'Just looking', t:'No pressure. Try one tiny habit and read a couple of Shots. That’s the whole app.'});
+  if (q.style === 'quiet') out.push({k:'Quiet mode', t:'Your home screen will skip the charts and just show what’s next. You can change that in Settings.'});
   return out;
 }
 function recShots(){
@@ -669,8 +713,9 @@ function recShots(){
   return r;
 }
 /* ---------- state ---------- */
-var CEL = null, ANIM = false, LASTTAB = 'today', ANS = null, V = 'today', P = {}, D = {}, F = {mins:10}, TM = null, OPTS = [], FULL = {}, CONF = {}, EDIT = false, lastUndo = null, toastT = null;
+var DAY = '', CEL = null, ANIM = false, LASTTAB = 'today', ANS = null, V = 'today', P = {}, D = {}, F = {mins:10}, TM = null, OPTS = [], FULL = {}, CONF = {}, EDIT = false, lastUndo = null, toastT = null;
 
+var OBV = ['intro', 'ask', 'learned', 'moment', 'action', 'review'];
 function homeView(){ return S.seen ? 'today' : 'intro'; }
 var TABNAME = {today:'Today', shots:'Shots', list:'Habits'};
 
@@ -678,6 +723,9 @@ function go(view, params, focus){
   if (V === 'doing' && view !== 'doing') stopTimer();
   var tt = $('#toast'); if (tt) tt.hidden = true;
   V = view === 'home' ? homeView() : view; P = params || {}; CONF = {}; ANIM = true; if (TABS[V]) LASTTAB = V; if (V !== 'habit') EDIT = false;
+  if (V === 'settings') { delete D.pname2; }
+  /* remember where onboarding is, so a reload picks up at the same step */
+  if (!S.seen && OBV.indexOf(V) >= 0) { S.ob = {v:V, p:P, d:D}; save(); } else if (S.seen && S.ob) { delete S.ob; save(); }
   render(focus !== false);
   if (focus !== false) window.scrollTo(0, 0);
 }
@@ -705,11 +753,11 @@ function radioRow(label, note, pressed, act, attrs){
   return '<button type="button" class="rowbtn" aria-pressed="' + (pressed ? 'true' : 'false') + '" data-act="' + act + '" ' + attrs + '><span class="t"><span>' + esc(label) + '</span>' + (note ? '<span class="n">' + esc(note) + '</span>' : '') + '</span><span class="radio">' + I.checkS + '</span></button>';
 }
 function node(h, opts){
-  var d = !!h.log[todayStr()];
-  var showSmall = slipped(h);
+  var lg = h.log[todayStr()], d = !!lg;
+  var showSmall = d ? lg === 'small' : slipped(h);
   var txt = showSmall ? h.small : h.action;
   var lab = (d ? 'Mark not done: ' : 'Mark done: ') + txt;
-  return '<div class="node ' + (d ? 'is-done' : '') + '"><span class="knot"></span><div class="txt"><span class="cue">' + esc(cue(h)) + (showSmall && !d ? ' · small version today' : '') + '</span><span class="act">' + esc(cap(txt)) + '</span></div>' +
+  return '<div class="node ' + (d ? 'is-done' : '') + '"><span class="knot"></span><button type="button" class="txt" data-act="openHabit" data-id="' + h.id + '"><span class="cue">' + esc(cue(h)) + (showSmall ? (d ? ' · small version' : ' · small version today') : '') + '</span><span class="act">' + esc(cap(txt)) + '</span></button>' +
     '<button type="button" class="check" data-act="toggle" data-id="' + h.id + '" aria-pressed="' + (d ? 'true' : 'false') + '" aria-label="' + esc(lab) + '">' + I.check + '</button></div>';
 }
 
@@ -718,9 +766,9 @@ var views = {};
 
 views.intro = function(){
   var i = P.i || 0, nm = S.profile && S.profile.name ? S.profile.name : '';
-  var dots = '<div class="bars" aria-hidden="true">' + [0, 1, 2, 3].map(function(k){ return '<span class="' + (k <= i ? 'on' : '') + '"></span>'; }).join('') + '</div>';
-  var lbl = ['', 'The idea', 'About you', 'Your first habit'][i];
-  var bk = i === 3 ? (quizCount() === QS.length ? back('learned', 'Back') : back('intro', 'Back', 2)) : back('intro', 'Back', i - 1);
+  var dots = '<div class="bars" aria-hidden="true">' + [0, 1, 2, 3, 4].map(function(k){ return '<span class="' + (k <= i ? 'on' : '') + '"></span>'; }).join('') + '</div>';
+  var lbl = ['', 'The idea', 'Shots', 'About you', 'Your first habit'][i];
+  var bk = i === 4 ? (quizCount() === QS.length ? back('learned', 'Back') : back('intro', 'Back', 3)) : back('intro', 'Back', i - 1);
   var top = i === 0 ? '' : '<div class="topbar">' + bk + '<span class="small muted">' + lbl + '</span></div>' + dots;
   if (i === 0) {
     return '<div class="ob0"><div class="rise" style="--i:0">' + logoMark(72, true) + '</div><div class="wm rise" style="--i:1">then<i>.</i></div></div>' +
@@ -740,6 +788,15 @@ views.intro = function(){
       '<div class="spacer"></div><div class="rise" style="--i:8">' + cta('Makes sense', 'go', 'data-to="intro" data-i="2"') + '</div>';
   }
   if (i === 2) {
+    var demo = shotById('streak');
+    return top + '<div class="trow rise" style="--i:0"><span class="tbtn" style="cursor:default">' + buddy('happy', 76) + '</span><p class="bubble">I’ll teach you a few tricks too.</p></div>' +
+      '<h1 class="h1 sm rise" id="h" tabindex="-1" style="--i:1">Shots.<br><span class="dim">Why habits stick, in 30 seconds.</span></h1>' +
+      '<figure class="art rise" style="--i:2"><svg viewBox="0 0 320 212" role="img" aria-label="' + esc(demo.alt) + '">' + demo.svg(2) + '</svg></figure>' +
+      '<p class="muted rise" style="--i:3">Short drawn lessons on the psychology behind the app. Like why a streak can make you quit, and why alarms stop working.</p>' +
+      '<p class="small muted rise" style="--i:4">I’ll pick the ones that fit you. They live in the Shots tab.</p>' +
+      '<div class="spacer"></div><div class="rise" style="--i:5">' + cta('Sounds good', 'go', 'data-to="intro" data-i="3"') + '</div>';
+  }
+  if (i === 3) {
     return top + '<div class="trow rise" style="--i:0"><span class="tbtn" style="cursor:default">' + buddy('think', 76) + '</span><p class="bubble">Just a first name is fine.</p></div>' +
       '<h1 class="h1 sm rise" id="h" tabindex="-1" style="--i:1">What should<br><span class="dim">I call you?</span></h1>' +
       '<div class="field rise" style="--i:2"><label class="big" for="pname">Your first name</label><input id="pname" type="text" data-in="pname" value="' + esc(D.pname || '') + '" placeholder="Type your name" autocomplete="given-name" maxlength="30" enterkeyhint="done"></div>' +
@@ -756,7 +813,7 @@ views.intro = function(){
 
 views.moment = function(){
   var sel = D.custom && D.custom.trim() ? null : D.moment;
-  return steps(1, D.obFrom ? 'intro' : 'home', D.obFrom ? 3 : undefined) +
+  return steps(1, D.obFrom ? 'intro' : LASTTAB, D.obFrom ? 4 : undefined) +
   '<div class="stack" style="gap:8px"><h1 class="h1 sm" id="h" tabindex="-1">What do you already do every day?</h1><p class="muted">Pick one. That becomes your reminder, so you don\'t need an alarm.</p></div>' +
   '<div class="rows">' + (function(){ var sg = suggestedMoments(), ord = sg.concat(MOMENTS.filter(function(m){ return sg.indexOf(m) < 0; }));
     return ord.map(function(m){ return radioRow(m, sg.indexOf(m) >= 0 ? 'Suggested for you' : '', sel === m, 'pickMoment', 'data-v="' + esc(m) + '"'); }).join(''); })() + '</div>' +
@@ -800,11 +857,11 @@ function weekStrip(h){
     if (v) n++;
     cells += '<span class="wk"><i class="wd ' + (v === 'full' ? 'f' : v === 'small' ? 's' : '') + (k === 0 ? ' t' : '') + (d < h.created ? ' pre' : '') + '"></i><b aria-hidden="true">' + esc(new Date(p[0], p[1] - 1, p[2]).toLocaleDateString(undefined, {weekday:'narrow'})) + '</b></span>';
   }
-  return '<section class="stack rise" style="gap:10px;--i:4"><h2 class="sec">This week · ' + n + (n === 1 ? ' day done' : ' days done') + '</h2><div class="week" role="img" aria-label="' + n + ' of the last 7 days done">' + cells + '</div></section>';
+  return '<section class="stack rise" style="gap:10px;--i:4"><h2 class="sec">Last 7 days · ' + n + ' done</h2><div class="week" role="img" aria-label="' + n + ' of the last 7 days done">' + cells + '</div></section>';
 }
 function goalBar(h){
-  var a = age(h), pct = Math.min(100, Math.round(a / 66 * 100));
-  return '<section class="goal rise" style="--i:5"><div class="gb" role="progressbar" aria-valuemin="0" aria-valuemax="66" aria-valuenow="' + Math.min(a, 66) + '" aria-label="Days toward the typical 66"><i style="width:' + pct + '%"></i></div><p class="small muted"><span class="hl" style="font-weight:500">' + esc(cap(h.who || h.action)) + ' · day ' + a + '.</span> Habits usually feel automatic after about two months (66 days on average). Everyone’s different.</p></section>';
+  var r = Object.keys(h.log).length, pct = Math.min(100, Math.round(r / 66 * 100));
+  return '<section class="goal rise" style="--i:5"><div class="gb" role="progressbar" aria-valuemin="0" aria-valuemax="66" aria-valuenow="' + Math.min(r, 66) + '" aria-label="Times done, toward the typical 66"><i style="width:' + pct + '%"></i></div><p class="small muted"><span class="hl" style="font-weight:500">' + esc(cap(h.who || h.action)) + ' · done ' + r + (r === 1 ? ' time' : ' times') + '.</span> Most habits feel automatic after about 66 days of doing them. Yours might be sooner or later.</p></section>';
 }
 var LINES = ['A tiny version still counts.', 'You don’t have to feel like it. Just start.', 'Two minutes, then you’re free.', 'Don’t overthink it. Do the first bit.', 'Right after your cue works better than a set time.'];
 function celebrating(){ return CEL && Date.now() < CEL.until ? CEL : null; }
@@ -827,9 +884,11 @@ views.today = function(){
   var out = head();
   var cel = celebrating(), mood = 'idle', msg = LINES[Math.abs(diffDays('2026-01-01', t)) % LINES.length];
   if (cel) { mood = 'cheer'; msg = cel.msg; }
+  else if (next && slipped(next) && missRun(next) >= 3) { mood = 'wave'; msg = 'Welcome back. Start with the small version today.'; }
   else if (rdy) { mood = 'cheer'; msg = 'Big news. A habit is ready to graduate.'; }
   else if (due) { mood = 'think'; msg = 'Quick question below. Takes two seconds.'; }
   else if (!next) { mood = 'happy'; msg = 'Nice work. Go enjoy your day.'; }
+  else if (slipped(next) && missRun(next) === 2) { msg = 'Two days off. The small version keeps it going.'; }
   else if (slipped(next)) { msg = quiz().slip === 'bad' ? 'Missing a day doesn’t mean you’re bad at this. Just do the small one today.' : quiz().slip === 'reset' ? 'No need to wait for Monday. Today’s small version counts.' : 'Missed yesterday? No stress. Today’s small version counts.'; }
   out += '<div class="rise" style="--i:1">' + tallyRow(mood, msg, 84) + '</div>';
 
@@ -848,6 +907,9 @@ views.today = function(){
     out += '<h1 class="h1 rise" id="h" tabindex="-1" style="--i:2"><span class="dim">All done for today.</span><br>See you tomorrow.</h1>';
   }
   var cards = '';
+  if (S.habits.some(function(h){ return h.example; })) {
+    cards += '<section class="card"><span class="kicker">These are examples</span><p style="font-size:17px;line-height:1.45">This is what Then looks like a few weeks in. Ready to set up your own?</p><button type="button" class="link left accent" style="min-height:44px" data-act="ownStart">Set up my own</button></section>';
+  }
   if (due) {
     cards += '<section class="card"><span class="kicker">Weekly check-in</span><h2>Do you “' + esc(due.action) + '” without having to think about it?</h2>' +
       '<div class="seg">' + [['Not yet',0],['Sometimes',1],['Yes',2]].map(function(c){ return '<button type="button" data-act="checkin" data-id="' + due.id + '" data-v="' + c[1] + '" aria-pressed="false">' + c[0] + '</button>'; }).join('') + '</div></section>';
@@ -864,7 +926,7 @@ views.today = function(){
   }
 
   var ns = nextShot();
-  if (ns && !due && !rdy) {
+  if (ns && !due && !rdy && !quiet()) {
     out += '<button type="button" class="card" style="border:0;color:var(--fg);text-align:left;cursor:pointer;font-size:inherit;flex-direction:row;align-items:center;gap:12px" data-act="openShot" data-id="' + ns.id + '"><span style="flex-grow:1"><span class="kicker" style="display:block">' + (recShots().indexOf(ns.id) >= 0 ? 'Picked for you · 30 seconds' : 'Quick read · 30 seconds') + '</span><span style="font-size:17px;font-weight:500">' + esc(ns.t) + '</span></span>' + I.right + '</button>';
   }
   if (!storageOk) out += '<p class="small muted">This browser can\'t save data, so your habits last only until you close the tab.</p>';
@@ -874,16 +936,17 @@ views.today = function(){
 };
 
 function buildOptions(mins){
-  var o = [], t = todayStr();
+  var hab = [], other = [], t = todayStr();
   active().forEach(function(h){
     if (h.log[t]) return;
-    if (h.m <= mins) o.push({title:cap(h.action), note:cue(h), m:h.m, hid:h.id, kind:'full'});
-    if (h.m > 2 && 2 <= mins) o.push({title:cap(h.small), note:'The small version · ' + cue(h), m:2, hid:h.id, kind:'small'});
+    var sm = slipped(h), smM = Math.min(2, h.m);
+    if (!sm && h.m <= mins) hab.push({title:cap(h.action), note:'Your habit · ' + cue(h), m:h.m, hid:h.id, kind:'full'});
+    else if (smM <= mins) hab.push({title:cap(h.small), note:'Your habit, small version · ' + cue(h), m:smM, hid:h.id, kind:'small'});
   });
-  S.likes.forEach(function(l){ if (l.m <= mins) o.push({title:l.t, note:'From your list', m:l.m}); });
-  if (mins >= 1) o.push({title:'Ten slow breaths', note:'Anytime', m:1});
-  o.sort(function(a, b){ return b.m - a.m; });
-  return o.slice(0, 5);
+  S.likes.forEach(function(l){ if (l.m <= mins) other.push({title:l.t, note:'From your list', m:l.m}); });
+  other.sort(function(a, b){ return b.m - a.m; });
+  other.push({title:'Ten slow breaths', note:'Anytime', m:1});
+  return hab.concat(other).slice(0, Math.max(5, hab.length + 1));
 }
 
 views.free = function(){
@@ -903,8 +966,10 @@ function clockText(left){ return Math.floor(left / 60) + ':' + z2(left % 60); }
 views.doing = function(){
   var it = TM.item, total = TM.total, pct = ((total - TM.left) / total * 100).toFixed(1) + '%';
   var lbl = TM.running ? 'Pause' : (TM.left === 0 ? 'Finished' : (TM.left < total ? 'Resume' : 'Start'));
-  return '<div class="topbar">' + back('free', 'Pick something else') + '</div>' +
-  '<div class="stack" style="gap:6px"><span class="muted" style="font-size:15px">' + (it.hid ? 'Your habit · ' : '') + (total / 60) + ' minutes</span><h1 class="h1" id="h" tabindex="-1">' + esc(it.title) + '.</h1></div>' +
+  var mid = TM.running || (TM.left > 0 && TM.left < total), mins = total / 60;
+  return '<div class="topbar">' + (mid ? '<button type="button" class="back" data-act="leaveAsk">' + I.left + 'Pick something else</button>' : back('free', 'Pick something else')) + '</div>' +
+  (CONF.leave ? '<div class="card"><h2>Stop the timer?</h2><div class="seg" style="grid-template-columns:1fr 1fr"><button type="button" data-act="leaveYes">Stop</button><button type="button" data-act="leaveNo">Keep going</button></div></div>' : '') +
+  '<div class="stack" style="gap:6px"><span class="muted" style="font-size:15px">' + (it.hid ? 'Your habit · ' : '') + mins + (mins === 1 ? ' minute' : ' minutes') + '</span><h1 class="h1" id="h" tabindex="-1">' + esc(it.title) + '.</h1></div>' +
   '<div class="stack" style="gap:20px;padding-top:24px"><div class="clock" id="clock">' + clockText(TM.left) + '</div>' +
   '<div class="track" aria-hidden="true"><i style="left:0;top:8px;width:100%;height:4px;border-radius:2px;background:var(--track)"></i><i id="bar" style="left:0;top:8px;width:' + pct + ';height:4px;border-radius:2px;background:var(--accent)"></i><i id="knot" style="top:0;left:calc(' + pct + ' - 10px);width:20px;height:20px;border-radius:50%;background:var(--accent);border:3px solid var(--bg)"></i></div>' +
   '<p class="muted">' + (it.hid ? 'Finishing counts as today\'s habit.' : 'Leave the phone in your pocket if you can.') + '</p></div>' +
@@ -923,12 +988,17 @@ function tick(){
   if (!TM || !TM.running) return;
   TM.left = Math.max(0, Math.ceil((TM.endAt - Date.now()) / 1000));
   paintTimer();
-  if (TM.left <= 0) { TM.running = false; stopTimer(); render(false); toast('Time’s up. Nice work.'); }
+  if (TM.left <= 0) {
+    TM.running = false; stopTimer();
+    var it2 = TM.item, msg = 'Time’s up. Nice work.';
+    if (it2 && it2.hid) { var hx = byId(it2.hid), tx = todayStr(); if (hx && !hx.log[tx]) { logDone(hx, it2.kind); msg = 'Time’s up. Counted for today.'; } }
+    render(false); toast(msg);
+  }
 }
 
 /* rings + tally */
 function ringsSvg(h){
-  var n = Math.min(12, weekNum(h)), wn = weekNum(h), t = todayStr(), out = '';
+  var n = Math.min(12, weekNum(h)), wn = weekNum(h), t = endDay(h), out = '';
   var maxR = 94, minR = n === 1 ? 44 : 16;
   var step = n > 1 ? Math.min(14, (maxR - minR) / (n - 1)) : 0;
   out += '<circle cx="100" cy="100" r="7" fill="var(--dim)"/>';
@@ -943,10 +1013,10 @@ function ringsSvg(h){
   return '<svg viewBox="0 0 200 200" role="img" aria-label="' + n + ' growth ring' + (n === 1 ? '' : 's') + ', one per week. A ring is thicker when you did the habit on more days that week. The newest ring is amber.">' + out + '</svg>';
 }
 function tally(h){
-  var t = todayStr(), out = '', missed = 0, done = 0;
+  var t = todayStr(), end = endDay(h), out = '', missed = 0, done = 0;
   for (var i = 0; i < 42; i++) {
     var ds = addDays(t, i - 41), st, hgt, col, extra = '';
-    if (ds < h.created) { hgt = 4; col = 'var(--track)'; }
+    if (ds < h.created || ds > end) { hgt = 4; col = 'var(--track)'; }
     else if (h.log[ds]) { done++; hgt = h.log[ds] === 'small' ? 18 : 28; col = ds === t ? 'var(--accent)' : 'var(--fg)'; }
     else if (ds === t) { hgt = 28; col = 'transparent'; extra = ';border:1.5px solid var(--accent)'; }
     else { missed++; hgt = 8; col = 'var(--dim)'; }
@@ -962,7 +1032,7 @@ views.habit = function(){
   if (EDIT) {
     return '<div class="topbar"><button type="button" class="back" data-act="cancelEdit">' + I.left + 'Cancel</button></div>' +
     '<h1 class="h1 sm" id="h" tabindex="-1">Edit plan</h1>' +
-    '<div class="field"><label for="e-moment">After I…</label><input id="e-moment" type="text" data-in="eMoment" value="' + esc(D.eMoment) + '" autocomplete="off"></div>' +
+    '<div class="field"><label for="e-moment">After…</label><input id="e-moment" type="text" data-in="eMoment" value="' + esc(D.eMoment) + '" autocomplete="off"></div>' +
     '<div class="field"><label for="e-action">I will…</label><input id="e-action" type="text" data-in="eAction" value="' + esc(D.eAction) + '" autocomplete="off"></div>' +
     '<div class="field"><label for="e-small">On a hard day, at least…</label><input id="e-small" type="text" data-in="eSmall" value="' + esc(D.eSmall) + '" autocomplete="off"></div>' +
     '<div class="field"><label for="e-who">I\'m becoming…</label><input id="e-who" type="text" data-in="eWho" value="' + esc(D.eWho) + '" autocomplete="off"></div>' +
@@ -971,11 +1041,16 @@ views.habit = function(){
   var name = h.who ? '<span class="dim">Becoming</span><br>' + esc(h.who) + '.' : esc(cap(h.action)) + '.';
   var out = '<div class="topbar">' + back(LASTTAB, TABNAME[LASTTAB]) + '<button type="button" class="navlink" data-act="edit">Edit</button></div>' +
   '<div class="stack" style="gap:8px"><h1 class="h1" id="h" tabindex="-1">' + name + '</h1><p class="muted" style="font-size:15px">' + esc(cue(h)) + ', ' + esc(h.action) + '. ' + tot + (tot === 1 ? ' time' : ' times') + ' since ' + esc(new Date(h.created + 'T00:00:00').toLocaleDateString(undefined, {day:'numeric', month:'short'})) + '.</p></div>' +
-  '<div class="rings">' + ringsSvg(h) + '<div class="stack" style="gap:6px"><h2 style="font-size:17px;font-weight:700">Week ' + wk + '</h2><p class="small muted">Each ring is one week. The more days you did it, the thicker the ring. Habits can take anywhere from 3 weeks to 8 months, so go at your own pace.</p></div></div>' +
-  '<section class="stack" style="gap:10px"><div style="display:flex;justify-content:space-between;align-items:baseline"><h2 class="sec">Last ' + l[1] + ' days</h2><span style="font-size:15px"><b>' + l[0] + '</b> of ' + l[1] + ' days</span></div>' + tally(h) + '<p class="small muted">Short marks are days you missed. Nothing resets.</p></section>' +
-  '<section class="stack" style="gap:10px"><h2 style="font-size:17px;font-weight:500">Do you do it without having to think about it?</h2><div class="seg" role="group" aria-label="Weekly check-in">' +
-    [['Not yet',0],['Sometimes',1],['Yes',2]].map(function(c){ return '<button type="button" data-act="checkin" data-id="' + h.id + '" data-v="' + c[1] + '" aria-pressed="' + (tw && tw.v === c[1] ? 'true' : 'false') + '">' + c[0] + '</button>'; }).join('') +
-  '</div><p class="small muted">Say yes three weeks in a row and it graduates off your list.</p></section>';
+  '<div class="rings">' + ringsSvg(h) + '<div class="stack" style="gap:6px"><h2 style="font-size:17px;font-weight:700">Week ' + wk + '</h2><p class="small muted">Each ring is one week. The more days you did it, the thicker the ring. Habits can take anywhere from a few weeks to 8 months, so go at your own pace.</p></div></div>' +
+  '<section class="stack" style="gap:10px"><div style="display:flex;justify-content:space-between;align-items:baseline"><h2 class="sec">' + (l[1] === 1 ? 'Today' : 'Last ' + l[1] + ' days') + '</h2><span style="font-size:15px"><b>' + l[0] + '</b> of ' + l[1] + (l[1] === 1 ? ' day' : ' days') + '</span></div>' + tally(h) + '<p class="small muted">Short marks are days you missed. Nothing resets.</p></section>' +
+  (h.status === 'graduated'
+    ? '<section class="card"><span class="kicker">Graduated' + (h.gradDate ? ' · ' + esc(new Date(h.gradDate + 'T00:00:00').toLocaleDateString(undefined, {day:'numeric', month:'short'})) : '') + '</span><p style="font-size:17px;line-height:1.45">This one runs on its own now. If it starts slipping, bring it back.</p>' +
+        (active().length < 3 ? '<button type="button" class="link left accent" style="min-height:44px" data-act="unGrad" data-id="' + h.id + '">Bring it back</button>' : '<p class="small muted">You can bring it back when one of your three spots opens up.</p>') + '</section>'
+    : canCheck(h)
+      ? '<section class="stack" style="gap:10px"><h2 style="font-size:17px;font-weight:500">Do you do it without having to think about it?</h2><div class="seg" role="group" aria-label="Weekly check-in">' +
+        [['Not yet',0],['Sometimes',1],['Yes',2]].map(function(c){ return '<button type="button" data-act="checkin" data-id="' + h.id + '" data-v="' + c[1] + '" aria-pressed="' + (tw && tw.v === c[1] ? 'true' : 'false') + '">' + c[0] + '</button>'; }).join('') +
+        '</div><p class="small muted">Say yes three weeks in a row and it graduates off your list.</p></section>'
+      : '<section class="stack" style="gap:6px"><h2 style="font-size:17px;font-weight:500">Weekly check-in</h2><p class="small muted">' + (7 - age(h) === 1 ? 'Your first check-in is tomorrow.' : 'Your first check-in is in ' + (7 - age(h)) + ' days.') + ' Once a week I’ll ask if it’s happening on its own.</p></section>');
   if (ready(h)) out += '<button type="button" class="cta" data-act="gradOpen" data-id="' + h.id + '"><span>Graduate this habit</span><span class="dot">' + I.arrow + '</span></button>';
   out += '<div class="spacer"></div>';
   if (CONF.remove) out += '<div class="card"><h2>Remove this habit?</h2><p class="small muted">Its history is deleted and can\'t be brought back.</p><div class="seg" style="grid-template-columns:1fr 1fr"><button type="button" data-act="removeYes" data-id="' + h.id + '" style="background:var(--danger);color:var(--bg);font-weight:700">Remove</button><button type="button" data-act="removeNo">Keep it</button></div></div>';
@@ -987,11 +1062,12 @@ views.graduate = function(){
   var h = byId(P.id);
   if (!h) return views.today();
   var tot = Object.keys(h.log).length;
-  return '<div class="topbar">' + back('list', 'Habits') + '</div>' +
+  var bk = P.from === 'habit' ? '<button type="button" class="back" data-act="openHabit" data-id="' + h.id + '">' + I.left + 'Back</button>' : P.from === 'today' ? back('today', 'Today') : back('list', 'Habits');
+  return '<div class="topbar">' + bk + '</div>' +
   '<svg width="112" height="112" viewBox="0 0 200 200" role="img" aria-label="A full set of growth rings" style="align-self:flex-start"><circle cx="100" cy="100" r="9" fill="var(--accent)"/>' + [22, 37, 53, 70, 88].map(function(r, i){ return '<circle cx="100" cy="100" r="' + r + '" fill="none" stroke="var(--accent)" stroke-width="' + (5 + i * 1.3) + '"/>'; }).join('') + '</svg>' +
-  '<div class="stack" style="gap:12px"><h1 class="h1" id="h" tabindex="-1"><span class="dim">' + esc(cap(h.action)) + '</span><br>has graduated.</h1><p class="lead muted">For three weeks in a row, you said you do it without thinking. It doesn\'t need a spot on your list anymore.</p></div>' +
+  '<div class="stack" style="gap:12px"><h1 class="h1" id="h" tabindex="-1"><span class="dim">' + esc(cap(h.action)) + '</span><br>is ready to graduate.</h1><p class="lead muted">Three weeks in a row, you said you do it without thinking. It can come off your list and keep going on its own.</p></div>' +
   '<section class="card"><span class="muted" style="font-size:15px">' + esc(cue(h)) + ', ' + esc(h.action) + '.</span><div class="stats"><div><b>' + tot + '</b><span>times</span></div><div><b>' + age(h) + '</b><span>days</span></div><div><b>' + esc(new Date(h.created + 'T00:00:00').toLocaleDateString(undefined, {day:'numeric', month:'short'})) + '</b><span>started</span></div></div></section>' +
-  '<div class="spacer"></div><div class="stack">' + bigBtn('Take it off my list', 'gradYes', 'data-id="' + h.id + '"') + '<button type="button" class="link" data-act="gradLater" data-id="' + h.id + '">Keep it a little longer</button></div>' +
+  '<div class="spacer"></div><div class="stack">' + bigBtn('Graduate it', 'gradYes', 'data-id="' + h.id + '"') + '<button type="button" class="link" data-act="gradLater" data-id="' + h.id + '">Keep it a little longer</button></div>' +
   '<p class="small muted" style="text-align:center">This opens a spot. You can work on up to three habits at a time.</p>';
 };
 
@@ -1022,7 +1098,7 @@ views.settings = function(){
   return '<div class="topbar">' + back(LASTTAB, TABNAME[LASTTAB]) + '</div><h1 class="h1 sm" id="h" tabindex="-1">Settings</h1>' +
   '<section class="stack" style="gap:10px"><h2 class="sec">Profile</h2><div class="inline"><div class="field"><label for="pn">Your name</label><input id="pn" type="text" data-in="pname2" value="' + esc(S.profile.name || '') + '" autocomplete="given-name" maxlength="30"></div><button type="button" class="mini" data-act="saveName">Save</button></div></section>' +
   '<section class="stack" style="gap:10px"><h2 class="sec">Home screen</h2><div class="seg" role="group" aria-label="Home screen" style="grid-template-columns:1fr 1fr">' +
-    [['Full picture','show'],['Next step only','quiet']].map(function(o){ return '<button type="button" data-act="homeStyle" data-v="' + o[1] + '" aria-pressed="' + ((quiet() ? 'quiet' : 'show') === o[1] ? 'true' : 'false') + '">' + o[0] + '</button>'; }).join('') + '</div>' +
+    [['Full picture','show'],['Keep it quiet','quiet']].map(function(o){ return '<button type="button" data-act="homeStyle" data-v="' + o[1] + '" aria-pressed="' + ((quiet() ? 'quiet' : 'show') === o[1] ? 'true' : 'false') + '">' + o[0] + '</button>'; }).join('') + '</div>' +
     '<button type="button" class="link left accent" style="min-height:44px" data-act="go" data-to="ask" data-i="0">' + (quizCount() ? 'Retake Tally’s questions' : 'Answer Tally’s six questions') + '</button></section>' +
   '<section class="stack" style="gap:10px"><h2 class="sec">Appearance</h2><div class="seg" role="group" aria-label="Appearance">' +
     [['System','system'],['Light','light'],['Dark','dark']].map(function(o){ return '<button type="button" data-act="theme" data-v="' + o[1] + '" aria-pressed="' + ((S.theme || 'system') === o[1] ? 'true' : 'false') + '">' + o[0] + '</button>'; }).join('') + '</div></section>' +
@@ -1048,7 +1124,7 @@ views.shot = function(){
   var f = Math.max(0, Math.min(x.f.length - 1, P.f | 0)), fr = x.f[f], last = f === x.f.length - 1;
   var idx = SHOTS.indexOf(x), nx = SHOTS[idx + 1];
   var bars = x.f.map(function(_, i){ return '<span class="' + (i <= f ? 'on' : '') + '"></span>'; }).join('');
-  var out = '<div class="topbar">' + back('shots', 'Shots') + '<button type="button" class="navlink" data-act="replay" id="replay">' + I.replay + 'Replay</button></div>' +
+  var out = '<div class="topbar">' + (P.from === 'today' ? back('today', 'Today') : back('shots', 'Shots')) + '<button type="button" class="navlink" data-act="replay" id="replay">' + I.replay + 'Replay</button></div>' +
     '<div class="bars" aria-hidden="true">' + bars + '</div>' +
     '<figure class="art"><svg viewBox="0 0 320 212" role="img" aria-label="' + esc(x.alt) + '">' + x.svg(f) + '</svg></figure>' +
     '<div class="stack" style="gap:12px"><h1 class="h1 sm" id="h" tabindex="-1">' + esc(fr.h) + '</h1><p class="lead muted">' + esc(fr.b) + '</p></div>';
@@ -1069,30 +1145,34 @@ views.ask = function(){
   if (!q) return views.learned();
   var a = quiz()[q.k], nm = S.profile && S.profile.name;
   var bars = QS.map(function(_, k){ return '<span class="' + (k <= n ? 'on' : '') + '"></span>'; }).join('');
-  var bk = n > 0 ? back('ask', 'Back', n - 1) : S.seen ? back('settings', 'Settings') : back('intro', 'Back', 2);
+  var bk = n > 0 ? back('ask', 'Back', n - 1) : S.seen ? back('settings', 'Settings') : back('intro', 'Back', 3);
   return '<div class="topbar">' + bk + '<span class="small muted">About you · ' + (n + 1) + ' of ' + QS.length + '</span></div><div class="bars" aria-hidden="true">' + bars + '</div>' +
     '<div class="trow rise" style="--i:0"><span class="tbtn" style="cursor:default">' + buddy(q.mood, 76) + '</span><p class="bubble">' + esc(q.say(nm)) + '</p></div>' +
     '<div class="stack rise" style="gap:8px;--i:1"><h1 class="h1 sm" id="h" tabindex="-1">' + esc(q.q) + '</h1>' + (q.sub ? '<p class="muted">' + esc(q.sub) + '</p>' : '') + '</div>' +
     '<div class="rows rise" role="group" aria-label="' + esc(q.q) + '" style="--i:2">' + q.o.map(function(o){ return radioRow(o[1], o[2] || '', a === o[0], 'ans', 'data-k="' + q.k + '" data-v="' + o[0] + '"'); }).join('') + '</div>' +
-    '<div class="spacer"></div>' + (S.seen ? '' : '<button type="button" class="link" data-act="go" data-to="intro" data-i="3">Skip the questions</button>');
+    '<div class="spacer"></div>' + (S.seen ? '' : '<button type="button" class="link" data-act="go" data-to="intro" data-i="4">Skip the questions</button>');
 };
 views.learned = function(){
-  var nm = S.profile && S.profile.name, ins = insights();
+  var nm = S.profile && S.profile.name, ins = insights(), rs = recShots().slice(0, 3).map(shotById).filter(Boolean);
   return '<div class="topbar">' + back('ask', 'Back', QS.length - 1) + '<span class="small muted">About you</span></div>' +
     '<div class="trow rise" style="--i:0"><span class="tbtn" style="cursor:default">' + buddy('cheer', 76, true) + '</span><p class="bubble">' + (nm ? 'Thanks, ' + esc(nm) + '. Here’s what I noticed.' : 'Thanks. Here’s what I noticed.') + '</p></div>' +
     '<h1 class="h1 sm rise" id="h" tabindex="-1" style="--i:1">Your plan,<br><span class="dim">in short.</span></h1>' +
     ins.map(function(x, k){ return '<div class="card rise" style="--i:' + (2 + k) + '"><span class="kicker">' + esc(x.k) + '</span><p style="font-size:17px;line-height:1.45">' + esc(x.t) + '</p></div>'; }).join('') +
-    '<div class="spacer"></div><div class="stack stickycta rise" style="--i:' + (2 + ins.length) + '">' + cta(S.seen ? 'Back to Today' : 'Pick my first habit', 'learnedGo') +
+    (rs.length ? '<div class="card rise" style="--i:' + (2 + ins.length) + '"><span class="kicker">Shots picked for you</span><ul class="picks">' + rs.map(function(x){ return '<li>' + esc(x.t) + '</li>'; }).join('') + '</ul><p class="small muted">30 seconds each, in the Shots tab.</p></div>' : '') +
+    '<div class="spacer"></div><div class="stack stickycta rise" style="--i:' + (3 + ins.length) + '">' + cta(S.seen ? 'Back to Today' : 'Pick my first habit', 'learnedGo') +
     '<button type="button" class="link" data-act="go" data-to="ask" data-i="0">Change my answers</button></div>';
 };
 
 views.missed = function(){
   var h = byId(P.id);
   if (!h) return views.today();
-  var sc = slipCount(h), m = sc[0], n = sc[1];
+  var sc = slipCount(h), m = sc[0], n = sc[1], k = missRun(h);
+  var hd = k >= 3 ? ['Welcome back.', 'Start small again.'] : k === 2 ? ['Two days off.', 'Let’s keep it small.'] : ['You missed yesterday.', 'No big deal.'];
+  var bd = k >= 3 ? 'You’ve been away for ' + k + ' days. Nothing reset. Pick it back up with the small version today.' : k === 2 ? 'Two in a row is where habits usually start to fade. Doing the small version today keeps this one going.' : 'One missed day barely changes anything. The trick is not missing two in a row, so today’s version is smaller.';
+  var bb = k >= 3 ? 'Good to see you again.' : k === 2 ? 'Still here. Let’s go small today.' : 'Missing a day happens to everyone.';
   return '<div class="topbar">' + back('today', 'Today') + '</div>' +
-    '<div class="trow rise" style="--i:0"><span class="tbtn" style="cursor:default">' + buddy('idle', 76) + '</span><p class="bubble">Missing a day happens to everyone.</p></div>' +
-    '<div class="stack rise" style="gap:14px;--i:1"><h1 class="h1" id="h" tabindex="-1"><span class="dim">You missed yesterday.</span><br>No big deal.</h1><p class="lead muted">One missed day barely changes anything. The trick is not missing two in a row, so today’s version is smaller.</p></div>' +
+    '<div class="trow rise" style="--i:0"><span class="tbtn" style="cursor:default">' + buddy(k >= 3 ? 'wave' : 'idle', 76) + '</span><p class="bubble">' + bb + '</p></div>' +
+    '<div class="stack rise" style="gap:14px;--i:1"><h1 class="h1" id="h" tabindex="-1"><span class="dim">' + hd[0] + '</span><br>' + hd[1] + '</h1><p class="lead muted">' + bd + '</p></div>' +
     '<section class="card rise" style="padding:20px;--i:2"><span class="kicker">Today’s small version</span><p style="font-size:28px;font-weight:800;line-height:1.1;letter-spacing:-.02em">' + esc(cap(h.small)) + '.</p><p class="small muted" style="font-size:15px">' + esc(cue(h)) + '</p></section>' +
     '<div class="stack rise" style="--i:3">' + bigBtn('Got it', 'go', 'data-to="today"') + '<button type="button" class="link" data-act="full" data-id="' + h.id + '" data-back="1">Do the full version instead</button></div>' +
     '<div class="spacer"></div>' +
@@ -1100,6 +1180,7 @@ views.missed = function(){
 };
 /* ---------- render ---------- */
 function render(focus){
+  DAY = todayStr();
   var app = $('#app'), html = views[V]();
   app.className = (ANIM ? 'anim ' : '') + (TABS[V] ? 'has-tabs' : '');
   document.body.classList.toggle('tabs-on', !!TABS[V]);
@@ -1127,12 +1208,22 @@ function syncPick(k){
   var nx = document.getElementById('next');
   if (nx) nx.setAttribute('aria-disabled', pickReady() ? 'false' : 'true');
 }
+function slotsFull(){
+  var ex = S.habits.some(function(h){ return h.example && h.status === 'active'; });
+  go('list'); toast(ex ? 'The examples are using all three spots. Clear them to add your own.' : 'All three spots are taken. Graduate a habit to add another.');
+}
+function newDay(){ FULL = {}; CEL = null; lastUndo = null; var tt = $('#toast'); if (tt) tt.hidden = true; render(false); }
 function startPlan(){
-  if (active().length >= 3) { toast('All three slots are full. Graduate a habit to add another.'); go('list'); return; }
+  if (active().length >= 3) { slotsFull(); return; }
   D = {moment:'', custom:'', action:'', customAction:'', small:'', who:'', momentFinal:'', actionFinal:''};
   go('moment');
 }
-function normMoment(s){ s = s.trim().replace(/[.!]+$/, ''); s = s.replace(/^after\s+/i, ''); return s; }
+function normMoment(s){
+  s = s.trim().replace(/[.!,]+$/, '').replace(/^(after|when|once|as soon as)\s+/i, '');
+  if (s && !/^(i|i’m|i'm|my|the|we|our|it|work|school|class|dinner|lunch|breakfast)\b/i.test(s)) s = 'I ' + s;
+  if (/^i\b/.test(s)) s = 'I' + s.slice(1);
+  return s;
+}
 
 function makeExamples(){
   var t = todayStr();
@@ -1155,6 +1246,8 @@ function celebrate(h, kind){
 }
 function act(a, el){
   var ds = el.dataset;
+  /* the app was left open past midnight: show the new day before logging anything */
+  if (DAY && todayStr() !== DAY && /^(toggle|done|full|checkin|undo)$/.test(a)) { newDay(); toast('It’s a new day. Here’s today.'); return; }
   switch (a) {
     case 'go': go(ds.to, ds.i != null ? {i:+ds.i} : undefined); break;
     case 'start': startPlan(); break;
@@ -1169,12 +1262,12 @@ function act(a, el){
     case 'obSkip': go('ask', {i:0}); break;
     case 'ans': {
       if (ANS) break;
-      S.profile.quiz = S.profile.quiz || {}; S.profile.quiz[ds.k] = ds.v; save(); render(false);
+      S.profile.quiz = S.profile.quiz || {}; S.profile.quiz[ds.k] = ds.v; if (ds.k === 'style') S.profile.homeStyle = ds.v; save(); render(false);
       var n0 = P.i || 0;
       ANS = setTimeout(function(){ ANS = null; if (V !== 'ask' || (P.i || 0) !== n0) return; if (n0 + 1 < QS.length) go('ask', {i:n0 + 1}); else go('learned'); }, 380);
       break; }
-    case 'learnedGo': if (S.seen) go('today'); else go('intro', {i:3}); break;
-    case 'homeStyle': S.profile.quiz = S.profile.quiz || {}; S.profile.quiz.style = ds.v; save(); render(false); break;
+    case 'learnedGo': if (S.seen) go('today'); else go('intro', {i:4}); break;
+    case 'homeStyle': S.profile.homeStyle = ds.v; save(); render(false); break;
     case 'obPick': D.obI = +ds.i; D.obCustom = ''; render(false); break;
     case 'obGo': {
       var oc = (D.obCustom || '').trim(), oa = D.obI != null ? ACTIONS[D.obI] : null;
@@ -1184,11 +1277,11 @@ function act(a, el){
     case 'saveName': {
       var nm1 = (D.pname2 != null ? D.pname2 : (S.profile.name || '')).trim().slice(0, 30);
       S.profile.name = nm1; S.profile.created = S.profile.created || todayStr(); save(); toast(nm1 ? 'Saved. Hi, ' + nm1 + '.' : 'Name cleared.'); break; }
-    case 'openShot': go('shot', {id:ds.id, f:0}); break;
+    case 'openShot': go('shot', {id:ds.id, f:0, from:V === 'shot' ? P.from : V}); break;
     case 'shotNav': {
       var sx = shotById(ds.id), nf = +ds.f;
       if (sx && nf === sx.f.length - 1 && !shotDone(sx.id)) { S.shotsRead[sx.id] = todayStr(); save(); }
-      go('shot', {id:ds.id, f:nf}); break; }
+      go('shot', {id:ds.id, f:nf, from:P.from}); break; }
     case 'replay': { render(false); var rb = $('#replay'); if (rb) rb.focus({preventScroll:true}); break; }
     case 'examples':
       S.habits = S.habits.filter(function(h){ return !h.example; });
@@ -1203,28 +1296,32 @@ function act(a, el){
     case 'toReview': {
       var ca = D.customAction && D.customAction.trim();
       var preset = ACTIONS.filter(function(x){ return x.a === D.action; })[0];
-      D.actionFinal = ca ? ca.replace(/[.!]+$/, '').replace(/^i('ll| will)\s+/i, '') : D.action;
-      if (!D.actionFinal) { toast('Pick or write a tiny action first.'); break; }
-      D.small = ca ? 'do the first minute of it' : preset.s; D.who = ca ? '' : preset.who; D.mins = ca ? 2 : preset.m;
+      var fin = ca ? ca.replace(/[.!]+$/, '').replace(/^i('ll| will)\s+/i, '') : D.action;
+      if (!fin) { toast('Pick or write a tiny action first.'); break; }
+      /* keep what they typed on the review screen unless the action changed */
+      if (D.revFor !== fin) { D.small = ca ? 'do the first minute of it' : preset.s; D.who = ca ? '' : preset.who; D.mins = ca ? 2 : preset.m; D.revFor = fin; }
+      D.actionFinal = fin;
       go('review'); break; }
     case 'save': {
+      if (active().length >= 3) { slotsFull(); break; }
       var s = (D.small || '').trim() || 'do the first minute of it';
       var h = {id:uid(), moment:D.momentFinal, action:D.actionFinal, small:s.replace(/[.!]+$/, ''), m:D.mins || 5, who:(D.who || '').trim(), created:todayStr(), log:{}, checks:[], status:'active'};
       S.habits.push(h); S.seen = true; save(); if (D.obFrom || S.habits.length === 1) CEL = {until:Date.now() + 9000, msg:'You’re all set' + (S.profile.name ? ', ' + S.profile.name : '') + '. Tap Done once you’ve done it.'}; go('today'); if (!CEL || Date.now() > CEL.until) toast('Habit added.'); break; }
     case 'toggle': {
       var hh = byId(ds.id), t = todayStr();
       if (hh.log[t]) { delete hh.log[t]; save(); render(false); }
-      else { logDone(hh, slipped(hh) ? 'small' : 'full'); celebrate(hh, 'full'); render(false); toast('Marked done.', function(){ delete hh.log[t]; save(); render(false); }); }
+      else { var k2 = slipped(hh) ? 'small' : 'full'; logDone(hh, k2); celebrate(hh, k2); render(false); toast(k2 === 'small' ? 'Small version counted.' : 'Marked done.', function(){ delete hh.log[t]; CEL = null; save(); render(false); }); }
       break; }
     case 'done': {
       var d1 = byId(ds.id), t1 = todayStr(), kind = ds.kind;
-      logDone(d1, kind); celebrate(d1, kind); render(false); toast(kind === 'small' ? 'Small version counted. That still counts.' : 'Marked done.', function(){ delete d1.log[t1]; save(); render(false); }); break; }
+      logDone(d1, kind); celebrate(d1, kind); render(false); toast(kind === 'small' ? 'Small version counted.' : 'Marked done.', function(){ delete d1.log[t1]; CEL = null; save(); render(false); }); break; }
     case 'full': FULL[ds.id] = true; if (ds.back) go('today'); else render(false); break;
     case 'openMissed': go('missed', {id:ds.id}); break;
     case 'missedEdit': go('habit', {id:ds.id}); act('edit', el); break;
     case 'checkin': {
       var c = byId(ds.id); c.checks = c.checks || [];
       var last = c.checks[c.checks.length - 1], tt = todayStr();
+      if (!canCheck(c)) break;
       if (last && diffDays(last.d, tt) < 7) last.v = +ds.v; else c.checks.push({d:tt, v:+ds.v});
       save(); render(false); toast('Noted.'); if (ready(c) && V !== 'today') { /* shown on habit view */ } break; }
     case 'openHabit': go('habit', {id:ds.id}); break;
@@ -1233,14 +1330,23 @@ function act(a, el){
     case 'saveEdit': {
       var ed = byId(P.id);
       if (!(D.eMoment || '').trim() || !(D.eAction || '').trim()) { toast('The moment and the action can\'t be empty.'); break; }
-      ed.moment = normMoment(D.eMoment); ed.action = D.eAction.trim(); ed.small = (D.eSmall || '').trim() || ed.small; ed.who = (D.eWho || '').trim();
-      save(); EDIT = false; render(true); toast('Saved.'); break; }
+      var keptSmall = !(D.eSmall || '').trim();
+      ed.moment = normMoment(D.eMoment); ed.action = D.eAction.trim().replace(/[.!]+$/, '').replace(/^i('ll| will)\s+/i, ''); if (!keptSmall) ed.small = D.eSmall.trim().replace(/[.!]+$/, ''); ed.who = (D.eWho || '').trim();
+      save(); EDIT = false; render(true); toast(keptSmall ? 'Saved. Kept your old hard-day version.' : 'Saved.'); break; }
     case 'removeAsk': CONF.remove = true; render(false); break;
     case 'removeNo': CONF.remove = false; render(false); break;
     case 'removeYes': S.habits = S.habits.filter(function(x){ return x.id !== ds.id; }); save(); go('list'); toast('Habit removed.'); break;
-    case 'gradOpen': go('graduate', {id:ds.id}); break;
-    case 'gradYes': { var g = byId(ds.id); g.status = 'graduated'; g.gradDate = todayStr(); save(); go('list'); toast('Graduated. You can add a new habit now.'); break; }
-    case 'gradLater': { var g2 = byId(ds.id); g2.deferred = todayStr(); save(); go('today'); toast('We\'ll ask again in two weeks.'); break; }
+    case 'gradOpen': go('graduate', {id:ds.id, from:V}); break;
+    case 'gradYes': { var g = byId(ds.id); g.status = 'graduated'; g.gradDate = todayStr(); delete g.deferred; save(); go('list'); toast('Graduated. A spot just opened up.'); break; }
+    case 'gradLater': { var g2 = byId(ds.id), fr = P.from; g2.deferred = todayStr(); save(); if (fr === 'habit') go('habit', {id:g2.id}); else go(fr === 'list' ? 'list' : 'today'); toast('Okay. I’ll ask again in two weeks.'); break; }
+    case 'unGrad': { var ug = byId(ds.id); if (active().length >= 3) { slotsFull(); break; } ug.status = 'active'; delete ug.gradDate; delete ug.deferred; ug.checks = []; save(); render(false); toast('It’s back on your list.'); break; }
+    case 'ownStart': {
+      S.habits = S.habits.filter(function(x){ return !x.example; });
+      if (S.habits.length) { save(); startPlan(); break; }
+      S.seen = false; save(); go('intro', {i:1}); break; }
+    case 'leaveAsk': CONF.leave = true; render(false); break;
+    case 'leaveNo': CONF.leave = false; render(false); break;
+    case 'leaveYes': go('free'); break;
     case 'free': F.mins = F.mins || 10; go('free'); break;
     case 'dur': F.mins = +ds.m; render(false); break;
     case 'startItem': { var it = OPTS[+ds.i]; TM = {item:it, total:it.m * 60, left:it.m * 60, running:false, endAt:0, iv:null}; go('doing'); break; }
@@ -1251,7 +1357,7 @@ function act(a, el){
       render(false); var b = $('[data-act="tstart"]'); if (b) b.focus(); break;
     case 'tdone': {
       var item = TM && TM.item; stopTimer();
-      if (item && item.hid) { var hd = byId(item.hid), td = todayStr(); if (hd && !hd.log[td]) { logDone(hd, item.kind); go('today'); toast('Counted. Well done.', function(){ delete hd.log[td]; save(); render(false); }); break; } }
+      if (item && item.hid) { var hd = byId(item.hid), td = todayStr(); if (hd && !hd.log[td]) { logDone(hd, item.kind); go('today'); toast('Counted. Well done.', function(){ delete hd.log[td]; save(); render(false); }); break; } if (hd) { go('today'); toast('Counted. Well done.'); break; } }
       go('today'); toast('Nice. That was a good use of the time.'); break; }
     case 'addLike': {
       var tx = (D.likeT || '').trim();
@@ -1267,9 +1373,12 @@ function act(a, el){
       break; }
     case 'importGo': {
       try {
-        var obj = JSON.parse((D.importText || '').trim());
-        if (!obj || !Array.isArray(obj.habits)) throw new Error('bad');
-        obj.likes = Array.isArray(obj.likes) ? obj.likes : []; obj.shotsRead = obj.shotsRead && typeof obj.shotsRead === 'object' ? obj.shotsRead : {}; obj.profile = obj.profile && typeof obj.profile === 'object' ? obj.profile : {name:''}; obj.v = 1; S = obj; save(); applyTheme(); D.importText = ''; go('list'); toast('Backup restored.');
+        var obj = cleanState(JSON.parse((D.importText || '').trim()), true);
+        if (!obj) throw new Error('bad');
+        /* try it before keeping it, so a broken backup can't replace good data */
+        var prev = S; S = obj;
+        try { views.list(); views.today(); views.settings(); } catch (er2) { S = prev; throw er2; }
+        FULL = {}; CEL = null; save(); applyTheme(); D.importText = ''; go(S.seen ? 'list' : 'intro'); toast('Backup restored.');
       } catch (er) { toast('That doesn\'t look like a backup. Paste the full text.'); }
       break; }
     case 'resetAsk': CONF.reset = true; render(false); break;
@@ -1281,6 +1390,8 @@ function act(a, el){
 }
 
 document.addEventListener('click', function(e){
+  var tEl = e.target.closest ? e.target.closest('#toast') : null;
+  if (tEl && !e.target.closest('[data-act]')) { tEl.hidden = true; lastUndo = null; return; }
   var el = e.target.closest ? e.target.closest('[data-act]') : null;
   if (!el || el.disabled) return;
   act(el.dataset.act, el);
@@ -1308,11 +1419,20 @@ document.addEventListener('pointermove', function(e){
   });
 });
 document.addEventListener('keydown', function(e){ if (e.key === 'Enter' && e.target && e.target.id === 'pname') { e.preventDefault(); act('obName', e.target); } });
-document.addEventListener('visibilitychange', function(){ if (!document.hidden && TM && TM.running) tick(); });
+function dayCheck(){
+  if (document.hidden || !DAY || todayStr() === DAY) return;
+  var ae = document.activeElement;
+  if (ae && /^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName)) return;
+  if (V === 'doing' && TM && TM.running) return;
+  newDay();
+}
+document.addEventListener('visibilitychange', function(){ if (!document.hidden && TM && TM.running) tick(); dayCheck(); });
+setInterval(dayCheck, 30000);
 
 applyTheme();
 V = homeView();
-if (V === 'intro' && S.profile && S.profile.name) { var qc = quizCount(); if (qc < QS.length) P = {i:qc}, V = 'ask'; else V = 'learned'; }
+if (!S.seen && S.ob && OBV.indexOf(S.ob.v) >= 0) { V = S.ob.v; P = S.ob.p || {}; D = S.ob.d || {}; if (V === 'intro' && (P.i | 0) > 4) P = {i:0}; }
+else if (V === 'intro' && S.profile && S.profile.name) { var qc = quizCount(); if (qc < QS.length) P = {i:qc}, V = 'ask'; else V = 'learned'; }
 render(false);
 })();
 </script>

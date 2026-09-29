@@ -8,7 +8,7 @@ Meet **Tally**, the mascot who asks a few questions first and tailors the app to
 
 | Screen | Where it lives |
 |---|---|
-| Welcome and onboarding (4 steps) | first launch |
+| Welcome and onboarding (5 steps: hello, the idea, Shots, your name, first habit) | first launch; picks up where you left off after a reload |
 | Tally's six questions and "how I'll help you" | after entering your name, or Settings > Answer Tally's six questions |
 | Pick a moment, pick a tiny action, review | Habits > Add a habit |
 | Today (hero sentence, week dots, progress) | Today tab |
